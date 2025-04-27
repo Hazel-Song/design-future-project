@@ -35,13 +35,13 @@ export default function LocalChallengesPage() {
       <div className="flex-none w-full flex justify-center py-8 relative">
         {/* 返回按钮 */}
         <Link 
-          href="/" 
+          href="/future-signals" 
           className="absolute left-8 top-1/2 -translate-y-1/2 flex items-center text-[#5157E8] hover:text-[#3a3fa0] transition-colors"
         >
           <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          <span>返回首页</span>
+          <span>返回上一步</span>
         </Link>
         <div className="flex items-center bg-[#C9D6F7]/20 rounded-full px-8 py-2 gap-6">
           {steps.map((step) => (
