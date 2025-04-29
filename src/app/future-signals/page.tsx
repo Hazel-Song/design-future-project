@@ -6,10 +6,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 const steps = [
-  { id: 1, label: 'Future Signal' },
-  { id: 2, label: 'Local Challenge' },
-  { id: 3, label: 'Interpretation' },
-  { id: 4, label: 'Tomorrow Headline' },
+  { id: 1, label: 'Future Signal', path: '/future-signals', current: true },
+  { id: 2, label: 'Local Challenge', path: '/local-challenges' },
+  { id: 3, label: 'Interpretation', path: '/interpretation' },
+  { id: 4, label: 'Tomorrow Headline', path: '/tomorrow-headlines' },
 ];
 
 const VIEW_TYPES = [
@@ -86,11 +86,26 @@ export default function FutureSignalsPage() {
           <span>返回首页</span>
         </Link>
         <div className="flex items-center bg-[#C9D6F7]/20 rounded-full px-8 py-2 gap-6">
-          {steps.map((step, idx) => (
-            <div key={step.id} className="flex items-center gap-2">
-              <div className={`w-8 h-8 flex items-center justify-center rounded-full text-white text-base ${idx === 0 ? 'bg-[#5157E8]' : 'bg-[#B3B8D8] text-[#5157E8]'}`}>{idx === 0 ? step.id : step.id}</div>
-              <span className={idx === 0 ? 'text-[#23272E]' : 'text-[#6B7280]'}>{step.label}</span>
-            </div>
+          {steps.map((step) => (
+            <Link
+              key={step.id}
+              href={step.path}
+              className={`flex items-center gap-2 group transition-colors ${
+                step.current ? 'cursor-default' : 'hover:text-[#5157E8]'
+              }`}
+            >
+              <div 
+                className={`w-8 h-8 flex items-center justify-center rounded-full text-white text-base
+                  ${step.current ? 'bg-[#5157E8]' : 'bg-[#B3B8D8] group-hover:bg-[#5157E8]'} transition-colors`}
+              >
+                {step.id}
+              </div>
+              <span className={`${
+                step.current ? 'text-[#23272E]' : 'text-[#6B7280] group-hover:text-[#5157E8]'
+              } transition-colors`}>
+                {step.label}
+              </span>
+            </Link>
           ))}
         </div>
       </div>

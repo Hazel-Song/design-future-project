@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import ChatInterface from '@/components/ChatInterface';
 
 const steps = [
   { id: 1, label: 'Future Signal', path: '/future-signals', completed: true },
@@ -64,6 +65,7 @@ export default function LocalChallengesPage() {
   const [chatInput, setChatInput] = useState('');
   const [chatHistory, setChatHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
 
   // 从 localStorage 获取之前选择的 Future Signal
   const [selectedFutureSignal, setSelectedFutureSignal] = useState<any>(null);
@@ -80,8 +82,21 @@ export default function LocalChallengesPage() {
     if (savedLocalChallenge) {
       const parsed = JSON.parse(savedLocalChallenge);
       setSelectedId(parsed.id);
+      setSelectedChallenge(parsed);
     }
   }, []);
+
+  // 当选中的挑战ID改变时，更新selectedChallenge
+  useEffect(() => {
+    if (selectedId) {
+      const challenge = challenges.find(c => c.id === selectedId);
+      if (challenge) {
+        setSelectedChallenge(challenge);
+      }
+    } else {
+      setSelectedChallenge(null);
+    }
+  }, [selectedId, challenges]);
 
   const handleAddChallenge = () => {
     const errors: FormError = {};
@@ -114,20 +129,80 @@ export default function LocalChallengesPage() {
     setChallenges(challenges.filter(c => c.id !== id));
   };
 
-  const handleSendMessage = () => {
-    if (!chatInput.trim()) return;
+  const handleSendMessage = async () => {
+    if (!chatInput.trim() || !selectedChallenge) {
+      if (!selectedChallenge) {
+        const errorResponse = { role: 'assistant' as const, content: '请先选择一个地方挑战。' };
+        setChatHistory(prev => [...prev, errorResponse]);
+      }
+      return;
+    }
     
     const newMessage = { role: 'user' as const, content: chatInput };
     setChatHistory([...chatHistory, newMessage]);
     setChatInput('');
     setIsLoading(true);
     
-    // 模拟AI响应，实际项目中需要替换为真实的API调用
-    setTimeout(() => {
-      const aiResponse = { role: 'assistant' as const, content: '这是一个模拟的AI响应。在实际项目中，这里需要替换为真实的API调用。' };
-      setChatHistory(prev => [...prev, aiResponse]);
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: chatInput,
+          systemPrompt: `作为一个了解会津地区的专家，你正在帮助用户探索以下地方挑战：
+
+主题：${selectedChallenge.title}
+描述：${selectedChallenge.description}
+
+请根据用户的问题，结合这个地方挑战的特点，提供专业、有见地的回答。回答要求：
+1. 紧扣主题
+2. 具有启发性
+3. 言简意赅
+4. 长度控制在100字以内`
+        })
+      });
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (e) {
+        console.error('JSON parse error:', e);
+        throw new Error('服务器响应格式错误');
+      }
+      
+      if (!response.ok) {
+        throw new Error(data.error || '请求失败');
+      }
+
+      if (data.reply) {
+        const aiResponse = { role: 'assistant' as const, content: data.reply };
+        setChatHistory(prev => [...prev, aiResponse]);
+      } else {
+        throw new Error('服务器返回的数据格式不正确');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      let errorMessage = '抱歉，发生了错误。请稍后再试。';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('API认证失败')) {
+          errorMessage = '系统配置错误，请联系管理员。';
+        } else if (error.message.includes('配额不足')) {
+          errorMessage = 'API使用量已达上限，请稍后再试。';
+        } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          errorMessage = '网络连接错误，请检查网络连接并重试。';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      const errorResponse = { role: 'assistant' as const, content: errorMessage };
+      setChatHistory(prev => [...prev, errorResponse]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const usePromptTemplate = (prompt: string) => {
@@ -336,76 +411,8 @@ export default function LocalChallengesPage() {
         </div>
 
         {/* 右侧对话区 */}
-        <div className="w-1/2 bg-white rounded-xl shadow flex flex-col min-h-0">
-          <div className="flex-none p-4 border-b border-gray-200">
-            <h3 className="text-lg font-bold text-[#5157E8]">AI 助手</h3>
-          </div>
-
-          {/* 对话历史 */}
-          <div className="flex-1 overflow-auto p-4 space-y-4">
-            {chatHistory.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[80%] p-3 rounded-lg ${
-                    message.role === 'user'
-                      ? 'bg-[#5157E8] text-white'
-                      : 'bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  {message.content}
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-gray-100 text-gray-700 p-3 rounded-lg">
-                  正在思考...
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 底部输入区域 */}
-          <div className="flex-none p-4 pb-20 space-y-4 border-t border-gray-200">
-            {/* 提示词模板 */}
-            <div className="space-y-2">
-              <div className="text-sm font-medium text-gray-700">常用提示词</div>
-              <div className="flex flex-wrap gap-2">
-                {promptTemplates.map(template => (
-                  <button
-                    key={template.id}
-                    className="px-3 py-1.5 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
-                    onClick={() => usePromptTemplate(template.prompt)}
-                  >
-                    {template.title}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 输入框和发送按钮 */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5157E8] focus:border-transparent"
-                placeholder="输入您的问题..."
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              />
-              <button
-                className="p-2 text-white bg-[#5157E8] rounded-lg hover:bg-[#3a3fa0] transition-colors"
-                onClick={handleSendMessage}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                </svg>
-              </button>
-            </div>
-          </div>
+        <div className="w-1/3 p-4 border-l">
+          <ChatInterface selectedChallenge={selectedChallenge} />
         </div>
       </div>
 

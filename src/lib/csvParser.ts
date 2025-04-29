@@ -20,22 +20,45 @@ export async function fetchFutureSignals(): Promise<FutureSignal[]> {
     
     return rows.slice(1) // 跳过标题行
       .filter(row => row.some(cell => cell.trim())) // 过滤空行
-      .map(row => {
+      .map((row, index) => {
         const signal: any = {};
-        headers.forEach((header, index) => {
-          const value = row[index] || '';
+        headers.forEach((header, colIndex) => {
+          const value = row[colIndex] || '';
           // 处理特殊字符和格式
-          const cleanValue = value
+          let cleanValue = value
             .replace(/[\u2018\u2019]/g, "'") // 替换智能引号
             .replace(/[\u201C\u201D]/g, '"') // 替换智能双引号
             .replace(/\r\n|\n|\r/g, ' ') // 替换换行符为空格
             .trim();
+
+          // 确保 id 字段总是有效的数字
+          if (header.trim() === 'id') {
+            const parsedId = parseInt(cleanValue);
+            signal[header.trim()] = isNaN(parsedId) ? index + 1 : parsedId;
+            return;
+          }
+
+          // 格式化 sign 字段
+          if (header.trim() === 'sign') {
+            signal[header.trim()] = cleanValue.startsWith('Sign') ? cleanValue : `Sign ${index + 1}`;
+            return;
+          }
+
+          // 格式化 title 字段：确保标题简短且格式一致
+          if (header.trim() === 'title') {
+            if (!cleanValue) {
+              cleanValue = `Future Signal ${index + 1}`;
+            } else if (cleanValue.length > 50) {
+              const firstSentence = cleanValue.split('.')[0];
+              const keyPhrase = firstSentence.split(',')[0];
+              cleanValue = keyPhrase.length <= 50 ? keyPhrase : firstSentence.substring(0, 50) + '...';
+            }
+          }
           
-          signal[header.trim()] = header === 'id' 
-            ? parseInt(cleanValue) 
-            : header === 'thumbnail'
-              ? `/images/future-signals/${cleanValue.split('/').pop()}` // 修改图片路径
-              : cleanValue;
+          // 处理其他字段
+          signal[header.trim()] = header.trim() === 'thumbnail'
+            ? `/images/future-signals/${cleanValue.split('/').pop()}` // 修改图片路径
+            : cleanValue || ''; // 确保空值被替换为空字符串
         });
         
         return signal as FutureSignal;
