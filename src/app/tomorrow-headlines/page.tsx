@@ -1,17 +1,50 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 const steps = [
-  { id: 1, label: 'Future Signal', completed: true },
-  { id: 2, label: 'Local Challenge', completed: true },
-  { id: 3, label: 'Interpretation', completed: true },
-  { id: 4, label: 'Tomorrow Headline', current: true },
+  { id: 1, label: 'Future Signal', path: '/future-signals', completed: true },
+  { id: 2, label: 'Local Challenge', path: '/local-challenges', completed: true },
+  { id: 3, label: 'Interpretation', path: '/interpretation', completed: true },
+  { id: 4, label: 'Tomorrow Headline', path: '/tomorrow-headlines', current: true },
 ];
 
 export default function TomorrowHeadlinesPage() {
   const [selectedHeadline, setSelectedHeadline] = useState<number | null>(null);
+  const [savedData, setSavedData] = useState<{
+    futureSignal: any;
+    localChallenge: any;
+    interpretation: {
+      content: string;
+      prototype: {
+        a: string;
+        b: string;
+        c: string;
+      };
+    } | null;
+  }>({
+    futureSignal: null,
+    localChallenge: null,
+    interpretation: null
+  });
+
+  useEffect(() => {
+    try {
+      // 获取所有保存的数据
+      const savedFutureSignal = localStorage.getItem('selectedFutureSignal');
+      const savedLocalChallenge = localStorage.getItem('selectedLocalChallenge');
+      const savedInterpretation = localStorage.getItem('interpretationData');
+
+      setSavedData({
+        futureSignal: savedFutureSignal ? JSON.parse(savedFutureSignal) : null,
+        localChallenge: savedLocalChallenge ? JSON.parse(savedLocalChallenge) : null,
+        interpretation: savedInterpretation ? JSON.parse(savedInterpretation) : null
+      });
+    } catch (error) {
+      console.error('Error loading saved data:', error);
+    }
+  }, []);
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
@@ -29,9 +62,18 @@ export default function TomorrowHeadlinesPage() {
         </Link>
         <div className="flex items-center bg-[#C9D6F7]/20 rounded-full px-8 py-2 gap-6">
           {steps.map((step) => (
-            <div key={step.id} className="flex items-center gap-2">
-              <div className={`w-8 h-8 flex items-center justify-center rounded-full text-white text-base
-                ${step.completed ? 'bg-[#B3B8D8]' : step.current ? 'bg-[#5157E8]' : 'bg-[#B3B8D8]'}`}
+            <Link
+              key={step.id}
+              href={step.path}
+              className={`flex items-center gap-2 group transition-colors ${
+                step.current ? 'cursor-default' : 'hover:text-[#5157E8]'
+              }`}
+            >
+              <div 
+                className={`w-8 h-8 flex items-center justify-center rounded-full text-white text-base
+                  ${step.completed ? 'bg-[#B3B8D8] group-hover:bg-[#5157E8]' : 
+                    step.current ? 'bg-[#5157E8]' : 
+                    'bg-[#B3B8D8] group-hover:bg-[#5157E8]'} transition-colors`}
               >
                 {step.completed ? (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -41,8 +83,12 @@ export default function TomorrowHeadlinesPage() {
                   step.id
                 )}
               </div>
-              <span className={step.current ? 'text-[#23272E]' : 'text-[#6B7280]'}>{step.label}</span>
-            </div>
+              <span className={`${
+                step.current ? 'text-[#23272E]' : 'text-[#6B7280] group-hover:text-[#5157E8]'
+              } transition-colors`}>
+                {step.label}
+              </span>
+            </Link>
           ))}
         </div>
       </div>
@@ -63,22 +109,14 @@ export default function TomorrowHeadlinesPage() {
           <div className="flex-1 overflow-auto p-4">
             <div className="space-y-4">
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-lg font-medium mb-2">已选择的要素</h3>
-                <div className="space-y-2">
-                  <div className="text-gray-600">
-                    <span className="font-medium">Future Signal:</span>
-                    {/* 这里显示选择的未来信号 */}
-                    <div className="ml-4">选定的未来信号将显示在这里</div>
-                  </div>
-                  <div className="text-gray-600">
-                    <span className="font-medium">Local Challenge:</span>
-                    {/* 这里显示选择的地方挑战 */}
-                    <div className="ml-4">选定的地方挑战将显示在这里</div>
-                  </div>
-                  <div className="text-gray-600">
-                    <span className="font-medium">Interpretation:</span>
-                    {/* 这里显示输入的解释 */}
-                    <div className="ml-4">输入的解释将显示在这里</div>
+                <h3 className="text-lg font-medium mb-4">已选择的要素</h3>
+                <div className="space-y-4">
+                  {/* 显示解释内容 */}
+                  <div className="bg-white p-4 rounded-lg border border-gray-200">
+                    <div className="text-gray-600">
+                      <div className="font-medium mb-2">解释内容：</div>
+                      <div className="text-gray-700">{savedData.interpretation?.content || '未找到解释内容'}</div>
+                    </div>
                   </div>
                 </div>
               </div>

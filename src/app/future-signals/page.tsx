@@ -246,7 +246,15 @@ export default function FutureSignalsPage() {
             <button
               className="bg-[#5157E8] text-white px-8 py-3 rounded-full shadow-lg text-lg hover:bg-[#3a3fa0] transition-all"
               onClick={() => {
-                // 可以在这里添加数据保存逻辑
+                if (selected) {
+                  // 只保存必要的信息
+                  const dataToSave = {
+                    id: selected.id,
+                    title: selected.title,
+                    description: selected.summary
+                  };
+                  localStorage.setItem('selectedFutureSignal', JSON.stringify(dataToSave));
+                }
                 router.push('/local-challenges');
               }}
             >

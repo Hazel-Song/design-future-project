@@ -1,16 +1,29 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const steps = [
-  { id: 1, label: 'Future Signal', completed: true },
-  { id: 2, label: 'Local Challenge', current: true },
-  { id: 3, label: 'Interpretation' },
-  { id: 4, label: 'Tomorrow Headline' },
+  { id: 1, label: 'Future Signal', path: '/future-signals', completed: true },
+  { id: 2, label: 'Local Challenge', path: '/local-challenges', current: true },
+  { id: 3, label: 'Interpretation', path: '/interpretation' },
+  { id: 4, label: 'Tomorrow Headline', path: '/tomorrow-headlines' },
 ];
 
-const localChallenges = [
+interface Challenge {
+  id: number;
+  title: string;
+  description: string;
+  isUserCreated?: boolean;
+}
+
+interface FormError {
+  title?: string;
+  description?: string;
+}
+
+const initialChallenges: Challenge[] = [
   { id: 1, title: 'Population decline', description: '人口减少带来的社会和经济挑战' },
   { id: 2, title: 'Female exodus', description: '女性人才流失问题及其影响' },
   { id: 3, title: 'Social mutual assistance and social innovation', description: '社会互助和创新模式的发展' },
@@ -22,12 +35,120 @@ const localChallenges = [
   { id: 9, title: 'Future Creativity, how can AI solve real-world problems', description: 'AI如何解决现实世界问题的创新思路' },
 ];
 
+const promptTemplates = [
+  {
+    id: 1,
+    title: "会津地区的人口挑战",
+    prompt: "作为一个了解会津地区的专家，请分析会津地区在人口方面面临的主要挑战，包括人口老龄化、人才流失等问题。"
+  },
+  {
+    id: 2,
+    title: "会津地区的产业发展",
+    prompt: "请分析会津地区的传统产业现状，以及在数字化转型中可能面临的挑战和机遇。"
+  },
+  {
+    id: 3,
+    title: "会津地区的文化保护",
+    prompt: "请讨论会津地区在保护传统文化的同时，如何推动文化创新和现代化发展面临的挑战。"
+  }
+];
+
 export default function LocalChallengesPage() {
+  const router = useRouter();
+  const [challenges, setChallenges] = useState<Challenge[]>(initialChallenges);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showInput, setShowInput] = useState(false);
-  const [userInput, setUserInput] = useState('');
+  const [newTitle, setNewTitle] = useState('');
+  const [newDescription, setNewDescription] = useState('');
+  const [formErrors, setFormErrors] = useState<FormError>({});
+  const [chatInput, setChatInput] = useState('');
+  const [chatHistory, setChatHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const selectedChallenge = localChallenges.find(c => c.id === selectedId);
+  // 从 localStorage 获取之前选择的 Future Signal
+  const [selectedFutureSignal, setSelectedFutureSignal] = useState<any>(null);
+
+  useEffect(() => {
+    // 获取之前页面选择的 Future Signal
+    const savedFutureSignal = localStorage.getItem('selectedFutureSignal');
+    if (savedFutureSignal) {
+      setSelectedFutureSignal(JSON.parse(savedFutureSignal));
+    }
+
+    // 获取之前保存的 Local Challenge 选择
+    const savedLocalChallenge = localStorage.getItem('selectedLocalChallenge');
+    if (savedLocalChallenge) {
+      const parsed = JSON.parse(savedLocalChallenge);
+      setSelectedId(parsed.id);
+    }
+  }, []);
+
+  const handleAddChallenge = () => {
+    const errors: FormError = {};
+    if (!newTitle.trim()) {
+      errors.title = '请输入挑战标题';
+    }
+    if (!newDescription.trim()) {
+      errors.description = '请输入挑战描述';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    const newChallenge: Challenge = {
+      id: Math.max(...challenges.map(c => c.id)) + 1,
+      title: newTitle.trim(),
+      description: newDescription.trim(),
+      isUserCreated: true
+    };
+    setChallenges([newChallenge, ...challenges]);
+    setNewTitle('');
+    setNewDescription('');
+    setShowInput(false);
+    setFormErrors({});
+  };
+
+  const handleDelete = (id: number) => {
+    setChallenges(challenges.filter(c => c.id !== id));
+  };
+
+  const handleSendMessage = () => {
+    if (!chatInput.trim()) return;
+    
+    const newMessage = { role: 'user' as const, content: chatInput };
+    setChatHistory([...chatHistory, newMessage]);
+    setChatInput('');
+    setIsLoading(true);
+    
+    // 模拟AI响应，实际项目中需要替换为真实的API调用
+    setTimeout(() => {
+      const aiResponse = { role: 'assistant' as const, content: '这是一个模拟的AI响应。在实际项目中，这里需要替换为真实的API调用。' };
+      setChatHistory(prev => [...prev, aiResponse]);
+      setIsLoading(false);
+    }, 1000);
+  };
+
+  const usePromptTemplate = (prompt: string) => {
+    setChatInput(prompt);
+  };
+
+  const handleNextStep = () => {
+    if (!selectedId) {
+      alert('请先选择一个 Local Challenge');
+      return;
+    }
+
+    const selectedChallenge = challenges.find(c => c.id === selectedId);
+    if (selectedChallenge) {
+      // 保存选择的 Local Challenge
+      localStorage.setItem('selectedLocalChallenge', JSON.stringify(selectedChallenge));
+      
+      // 跳转到下一页
+      router.push('/interpretation');
+    }
+  };
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
@@ -45,9 +166,18 @@ export default function LocalChallengesPage() {
         </Link>
         <div className="flex items-center bg-[#C9D6F7]/20 rounded-full px-8 py-2 gap-6">
           {steps.map((step) => (
-            <div key={step.id} className="flex items-center gap-2">
-              <div className={`w-8 h-8 flex items-center justify-center rounded-full text-white text-base
-                ${step.completed ? 'bg-[#B3B8D8]' : step.current ? 'bg-[#5157E8]' : 'bg-[#B3B8D8]'}`}
+            <Link
+              key={step.id}
+              href={step.path}
+              className={`flex items-center gap-2 group transition-colors ${
+                step.current ? 'cursor-default' : 'hover:text-[#5157E8]'
+              }`}
+            >
+              <div 
+                className={`w-8 h-8 flex items-center justify-center rounded-full text-white text-base
+                  ${step.completed ? 'bg-[#B3B8D8] group-hover:bg-[#5157E8]' : 
+                    step.current ? 'bg-[#5157E8]' : 
+                    'bg-[#B3B8D8] group-hover:bg-[#5157E8]'} transition-colors`}
               >
                 {step.completed ? (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,40 +187,146 @@ export default function LocalChallengesPage() {
                   step.id
                 )}
               </div>
-              <span className={step.current ? 'text-[#23272E]' : 'text-[#6B7280]'}>{step.label}</span>
-            </div>
+              <span className={`${
+                step.current ? 'text-[#23272E]' : 'text-[#6B7280] group-hover:text-[#5157E8]'
+              } transition-colors`}>
+                {step.label}
+              </span>
+            </Link>
           ))}
         </div>
       </div>
 
-      {/* 主体两栏布局 */}
-      <div className="flex-1 flex px-2 gap-4 w-full min-h-0">
-        {/* 左侧视图区 */}
+      {/* 主体内容 */}
+      <div className="flex-1 px-2 min-h-0 flex gap-4">
+        {/* 左侧主要内容区 */}
         <div className="w-1/2 bg-white rounded-xl shadow flex flex-col min-h-0">
-          {/* 标题 */}
+          {/* 标题和添加按钮 */}
           <div className="flex-none p-4">
-            <div className="mb-2 flex items-center">
+            <div className="mb-2 flex items-center justify-between">
               <span className="text-lg font-bold text-[#5157E8]">地方挑战库</span>
+              <button
+                className="text-[#5157E8] hover:text-[#3a3fa0] transition-colors p-2 rounded-full hover:bg-gray-100"
+                onClick={() => setShowInput(true)}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </button>
             </div>
             <div className="border-b border-gray-200" />
           </div>
 
-          {/* 看板视图内容 - 可滚动区域 */}
+          {/* 新建输入框 */}
+          {showInput && (
+            <div className="flex-none p-4 border-b border-gray-200">
+              <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">标题</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-[#5157E8] focus:border-transparent
+                        ${formErrors.title ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
+                      placeholder="请输入挑战标题..."
+                      value={newTitle}
+                      onChange={(e) => {
+                        setNewTitle(e.target.value);
+                        setFormErrors(prev => ({ ...prev, title: undefined }));
+                      }}
+                    />
+                    {formErrors.title && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  {formErrors.title && (
+                    <p className="mt-1 text-sm text-red-500">{formErrors.title}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">详细描述</label>
+                  <div className="relative">
+                    <textarea
+                      className={`w-full h-32 p-2 border rounded-lg focus:ring-2 focus:ring-[#5157E8] focus:border-transparent
+                        ${formErrors.description ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
+                      placeholder="请输入挑战描述..."
+                      value={newDescription}
+                      onChange={(e) => {
+                        setNewDescription(e.target.value);
+                        setFormErrors(prev => ({ ...prev, description: undefined }));
+                      }}
+                    />
+                    {formErrors.description && (
+                      <div className="absolute right-3 top-3 text-red-500">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  {formErrors.description && (
+                    <p className="mt-1 text-sm text-red-500">{formErrors.description}</p>
+                  )}
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                    onClick={() => {
+                      setShowInput(false);
+                      setNewTitle('');
+                      setNewDescription('');
+                      setFormErrors({});
+                    }}
+                  >
+                    取消
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-[#5157E8] text-white rounded-lg hover:bg-[#3a3fa0] transition-colors"
+                    onClick={handleAddChallenge}
+                  >
+                    确定
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 挑战列表 */}
           <div className="flex-1 overflow-auto p-4">
             <div className="flex flex-col gap-2">
-              {localChallenges.map(challenge => (
+              {challenges.map(challenge => (
                 <div
                   key={challenge.id}
-                  className={`cursor-pointer border-l-4 p-3 bg-[#F9FAFB] hover:bg-gray-50 ${selectedId === challenge.id ? 'border-[#5157E8] bg-[#F3F4FD]' : 'border-gray-200'}`}
-                  onClick={() => {
-                    setSelectedId(challenge.id);
-                    setShowInput(false);
-                    setUserInput('');
-                  }}
+                  className={`group cursor-pointer border-l-4 p-3 bg-[#F9FAFB] hover:bg-gray-50 ${
+                    selectedId === challenge.id ? 'border-[#5157E8] bg-[#F3F4FD]' : 'border-gray-200'
+                  }`}
+                  onClick={() => setSelectedId(challenge.id)}
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-500">挑战 {challenge.id}</span>
-                    <div className="text-[#5157E8]">{challenge.title}</div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-500">挑战 {challenge.id}</span>
+                      <div className="text-[#5157E8]">{challenge.title}</div>
+                    </div>
+                    {challenge.isUserCreated && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">用户添加</span>
+                        <button
+                          className="text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(challenge.id);
+                          }}
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div className="text-xs text-gray-500 mt-1 line-clamp-2">{challenge.description}</div>
                 </div>
@@ -99,57 +335,89 @@ export default function LocalChallengesPage() {
           </div>
         </div>
 
-        {/* 右侧详情区 */}
+        {/* 右侧对话区 */}
         <div className="w-1/2 bg-white rounded-xl shadow flex flex-col min-h-0">
-          {selectedChallenge ? (
-            <>
-              {/* 文本描述区域 */}
-              <div className="flex-none p-4 bg-gray-100 rounded-t-xl">
-                <div className="flex items-center justify-between">
-                  <div className="text-lg text-gray-700">文本描述地方挑战</div>
-                  <button 
-                    className="text-[#5157E8] hover:text-[#3a3fa0] transition-colors p-2 rounded-full hover:bg-gray-200"
-                    onClick={() => setShowInput(!showInput)}
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                  </button>
-                </div>
-                <div className="mt-4">
-                  <h3 className="text-xl text-[#5157E8] mb-2">{selectedChallenge.title}</h3>
-                  <p className="text-gray-600">{selectedChallenge.description}</p>
-                </div>
-              </div>
+          <div className="flex-none p-4 border-b border-gray-200">
+            <h3 className="text-lg font-bold text-[#5157E8]">AI 助手</h3>
+          </div>
 
-              {/* 用户输入区域 */}
-              {showInput && (
-                <div className="flex-none p-4 border-t border-gray-200">
-                  <textarea
-                    className="w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5157E8] focus:border-transparent"
-                    placeholder="请输入您对这个地方挑战的描述..."
-                    value={userInput}
-                    onChange={(e) => setUserInput(e.target.value)}
-                  />
-                </div>
-              )}
-
-              {/* 底部确认按钮 */}
-              <div className="flex-none p-4 mt-auto flex justify-end">
-                <button
-                  className="bg-[#5157E8] text-white px-8 py-3 rounded-full shadow-lg text-lg hover:bg-[#3a3fa0] transition-all"
-                  onClick={() => alert('确认并继续，后续实现跳转与保存逻辑')}
+          {/* 对话历史 */}
+          <div className="flex-1 overflow-auto p-4 space-y-4">
+            {chatHistory.map((message, index) => (
+              <div
+                key={index}
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-[80%] p-3 rounded-lg ${
+                    message.role === 'user'
+                      ? 'bg-[#5157E8] text-white'
+                      : 'bg-gray-100 text-gray-700'
+                  }`}
                 >
-                  下一步
-                </button>
+                  {message.content}
+                </div>
               </div>
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center text-gray-500">
-              请从左侧选择一个地方挑战
+            ))}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="bg-gray-100 text-gray-700 p-3 rounded-lg">
+                  正在思考...
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 底部输入区域 */}
+          <div className="flex-none p-4 pb-20 space-y-4 border-t border-gray-200">
+            {/* 提示词模板 */}
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-gray-700">常用提示词</div>
+              <div className="flex flex-wrap gap-2">
+                {promptTemplates.map(template => (
+                  <button
+                    key={template.id}
+                    className="px-3 py-1.5 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+                    onClick={() => usePromptTemplate(template.prompt)}
+                  >
+                    {template.title}
+                  </button>
+                ))}
+              </div>
             </div>
-          )}
+
+            {/* 输入框和发送按钮 */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5157E8] focus:border-transparent"
+                placeholder="输入您的问题..."
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+              />
+              <button
+                className="p-2 text-white bg-[#5157E8] rounded-lg hover:bg-[#3a3fa0] transition-colors"
+                onClick={handleSendMessage}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
+      </div>
+
+      {/* 固定在右下角的下一步按钮 */}
+      <div className="fixed bottom-8 right-8">
+        <button
+          className="bg-[#5157E8] text-white px-8 py-3 rounded-full shadow-lg text-lg hover:bg-[#3a3fa0] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={handleNextStep}
+          disabled={!selectedId}
+        >
+          下一步
+        </button>
       </div>
     </div>
   );
