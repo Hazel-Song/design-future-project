@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import axios from 'axios';
 
 const steps = [
   { id: 1, label: 'Future Signal', path: '/future-signals', completed: true },
@@ -32,6 +33,19 @@ const magicIfTemplates = [
 interface SelectedData {
   futureSignal: { id: number; title: string; description: string } | null;
   localChallenge: { id: number; title: string; description: string } | null;
+}
+
+// 添加类型定义
+interface PrototypingResponse {
+  prototypingCard: string;
+}
+
+interface InterpretationResponse {
+  interpretation: string;
+}
+
+interface ChatResponse {
+  reply: string;
 }
 
 export default function InterpretationPage() {
@@ -101,12 +115,24 @@ export default function InterpretationPage() {
       return;
     }
     setIsPrototypingLoading(true);
-    // 模拟生成过程
-    setTimeout(() => {
-      setPrototypingCard('基于AI和人类协作的新型社区健康服务模式');
+    try {
+      const response = await axios.post<PrototypingResponse>('/api/generate-prototyping', {
+        futureSignal: selectedData.futureSignal,
+        localChallenge: selectedData.localChallenge
+      });
+      
+      if (response.data && response.data.prototypingCard) {
+        setPrototypingCard(response.data.prototypingCard);
+        setCanGenerateInterpretation(true);
+      } else {
+        throw new Error('无效的响应数据');
+      }
+    } catch (error) {
+      console.error('生成原型时出错:', error);
+      alert('生成原型时出现错误，请重试');
+    } finally {
       setIsPrototypingLoading(false);
-      setCanGenerateInterpretation(true);
-    }, 1500);
+    }
   };
 
   const handleGenerateInterpretation = async () => {
@@ -115,14 +141,27 @@ export default function InterpretationPage() {
       return;
     }
     setIsInterpretationLoading(true);
-    // 模拟生成过程
-    setTimeout(() => {
-      setInterpretation(`在未来，${selectedData.futureSignal?.title || 'A'} 会 ${prototypingCard}，因为 ${selectedData.localChallenge?.title || 'C'}`);
+    try {
+      const response = await axios.post<InterpretationResponse>('/api/generate-interpretation', {
+        futureSignal: selectedData.futureSignal,
+        localChallenge: selectedData.localChallenge,
+        prototypingCard
+      });
+      
+      if (response.data && response.data.interpretation) {
+        setInterpretation(response.data.interpretation);
+      } else {
+        throw new Error('无效的响应数据');
+      }
+    } catch (error) {
+      console.error('生成解释时出错:', error);
+      alert('生成解释时出现错误，请重试');
+    } finally {
       setIsInterpretationLoading(false);
-    }, 1500);
+    }
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!chatInput.trim()) return;
     
     const newMessage = { role: 'user' as const, content: chatInput };
@@ -130,12 +169,27 @@ export default function InterpretationPage() {
     setChatInput('');
     setIsChatLoading(true);
     
-    // 模拟AI响应
-    setTimeout(() => {
-      const aiResponse = { role: 'assistant' as const, content: '这是一个模拟的AI响应。在实际项目中，这里需要替换为真实的API调用。' };
-      setChatHistory(prev => [...prev, aiResponse]);
+    try {
+      const response = await axios.post<ChatResponse>('/api/chat', {
+        message: chatInput,
+        futureSignal: selectedData.futureSignal,
+        localChallenge: selectedData.localChallenge,
+        prototypingCard,
+        interpretation
+      });
+      
+      if (response.data && response.data.reply) {
+        const aiResponse = { role: 'assistant' as const, content: response.data.reply };
+        setChatHistory(prev => [...prev, aiResponse]);
+      } else {
+        throw new Error('无效的响应数据');
+      }
+    } catch (error) {
+      console.error('发送消息时出错:', error);
+      alert('发送消息时出现错误，请重试');
+    } finally {
       setIsChatLoading(false);
-    }, 1000);
+    }
   };
 
   const usePromptTemplate = (prompt: string) => {
