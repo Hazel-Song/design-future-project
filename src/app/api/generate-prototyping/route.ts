@@ -39,6 +39,7 @@ export async function POST(req: Request) {
     2. 考虑本地实际情况
     3. 包含创新元素
     4. 描述清晰简洁（200字以内）
+    5. 要求使用英文
     `;
 
     // 调用 OpenAI API

@@ -31,6 +31,7 @@ export async function POST(req: Request) {
     1. 保持语言流畅自然
     2. 确保逻辑关系清晰
     3. 体现因果关联
+    4. 要求使用英文
     `;
 
     const completion = await openai.chat.completions.create({

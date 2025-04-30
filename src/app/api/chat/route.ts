@@ -59,22 +59,20 @@ export async function POST(request: Request) {
     const messages: ChatCompletionMessageParam[] = [
       {
         role: "system",
-        content: `你是一个专业的AI助手，专门帮助用户探索日本会津地区的地方挑战。
-        当前正在讨论的命题是：${selectedChallenge ? JSON.stringify(selectedChallenge) : '未选择命题'}
+        content: `You are an AI assistant helping users explore local challenges in the Aizu region.
 
-        请根据这个命题，为用户提供专业、有见地的回答。回答时：
-        1. 考虑会津地区的特点和背景
-        2. 提供具体的建议和见解
-        3. 鼓励用户深入思考
-        4. 保持友好和专业的对话风格
-        5. 使用 Markdown 格式来组织你的回答，可以使用：
-           - 标题（#、##、###）
-           - 列表（- 或 1.）
-           - 粗体（**文本**）
-           - 斜体（*文本*）
-           - 引用（> 文本）
-           - 代码块（\`\`\`）
-        `
+        Current topic: ${selectedChallenge ? JSON.stringify(selectedChallenge) : 'No topic selected'}
+
+        Your response should be in this format:
+        TITLE: [A short 3-5 word title for a new challenge]
+        CONTENT: [Your main response in 50-80 words]
+
+        Guidelines:
+        1. Title should be concise and capture the key point
+        2. Use plain English text
+        3. Focus on practical insights
+        4. Be direct and clear
+        5. Maintain a professional tone`
       },
       {
         role: "user",
@@ -107,13 +105,26 @@ export async function POST(request: Request) {
 
           console.log('OpenAI响应成功:', completion);
 
-          return new NextResponse(
-            JSON.stringify({ reply: completion.choices[0].message.content }),
-            { 
-              status: 200,
-              headers: { 'Content-Type': 'application/json' }
-            }
-          );
+          if (completion.choices[0].message.content) {
+            // Parse the response to extract title and content
+            const responseText = completion.choices[0].message.content || '';
+            const titleMatch = responseText.match(/TITLE:\s*([\s\S]+?)(?=\s*CONTENT:|$)/);
+            const contentMatch = responseText.match(/CONTENT:\s*([\s\S]+)$/);
+
+            const title = titleMatch ? titleMatch[1].trim() : 'New Challenge';
+            const content = contentMatch ? contentMatch[1].trim() : responseText.trim();
+
+            return new NextResponse(
+              JSON.stringify({ 
+                reply: content,
+                title: title
+              }),
+              { 
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+              }
+            );
+          }
         } catch (error: any) {
           lastError = error;
           console.error(`OpenAI API调用失败，剩余重试次数: ${retries - 1}`, {

@@ -33,6 +33,7 @@ export async function POST(req: Request) {
        - 具体分析
        - 未来影响
        - 建议与启示
+    5. 要求使用英文，注意内容不要太长，300字以内
     `;
 
     const completion = await openai.chat.completions.create({

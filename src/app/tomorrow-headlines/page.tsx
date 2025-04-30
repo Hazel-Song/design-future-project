@@ -66,7 +66,7 @@ export default function TomorrowHeadlinesPage() {
 
   const handleGenerateHeadline = async () => {
     if (!savedData.interpretation?.content) {
-      alert('请先生成解释内容');
+      alert('Please generate the content to be interpreted first');
       return;
     }
 
@@ -84,8 +84,8 @@ export default function TomorrowHeadlinesPage() {
         throw new Error('Invalid response data');
       }
     } catch (error) {
-      console.error('生成头条图片时出错:', error);
-      alert('生成头条图片时出现错误，请重试');
+      console.error('An error occurred while generating the headline image. Please try again.');
+      alert('An error occurred while generating the headline image. Please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -103,7 +103,7 @@ export default function TomorrowHeadlinesPage() {
           <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          <span>返回上一步</span>
+          <span>Back to the previous step</span>
         </Link>
         <div className="flex items-center bg-[#C9D6F7]/20 rounded-full px-8 py-2 gap-6">
           {steps.map((step) => (
@@ -145,7 +145,7 @@ export default function TomorrowHeadlinesPage() {
           {/* 标题 */}
           <div className="flex-none p-4">
             <div className="mb-2">
-              <span className="text-lg font-bold text-[#5157E8]">明日头条生成</span>
+              <span className="text-lg font-bold text-[#5157E8]">Tomorrow Headline Generation</span>
             </div>
             <div className="border-b border-gray-200" />
           </div>
@@ -154,49 +154,49 @@ export default function TomorrowHeadlinesPage() {
           <div className="flex-1 overflow-auto p-4">
             <div className="space-y-4">
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-lg font-medium mb-4">已选择的要素</h3>
+                <h3 className="text-lg font-medium mb-4">Selected Elements</h3>
                 <div className="space-y-4">
                   {/* 显示解释内容 */}
                   <div className="bg-white p-4 rounded-lg border border-gray-200">
                     <div className="text-gray-600">
-                      <div className="font-medium mb-2">解释内容：</div>
-                      <div className="text-gray-700">{savedData.interpretation?.content || '未找到解释内容'}</div>
+                      <div className="font-medium mb-2">Interpretation Content:</div>
+                      <div className="text-gray-700">{savedData.interpretation?.content || 'No interpretation content found'}</div>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="bg-white border-2 border-[#5157E8] p-4 rounded-lg">
-                <h3 className="text-lg font-medium mb-2">生成设置</h3>
+                <h3 className="text-lg font-medium mb-2">Generation Settings</h3>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      时间跨度
+                      Time Span
                     </label>
                     <select 
                       className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5157E8] focus:border-transparent"
                       value={selectedYear}
                       onChange={(e) => setSelectedYear(e.target.value)}
                     >
-                      <option value="2025">2025年</option>
-                      <option value="2030">2030年</option>
-                      <option value="2035">2035年</option>
-                      <option value="2040">2040年</option>
-                      <option value="2050">2050年</option>
+                      <option value="2025">2025</option>
+                      <option value="2030">2030</option>
+                      <option value="2035">2035</option>
+                      <option value="2040">2040</option>
+                      <option value="2050">2050</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      头条风格
+                      Headline Style
                     </label>
                     <select 
                       className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5157E8] focus:border-transparent"
                       value={selectedStyle}
                       onChange={(e) => setSelectedStyle(e.target.value)}
                     >
-                      <option value="positive">积极正面</option>
-                      <option value="neutral">中立客观</option>
-                      <option value="negative">批评反思</option>
+                      <option value="positive">Positive</option>
+                      <option value="neutral">Neutral</option>
+                      <option value="negative">Negative</option>
                     </select>
                   </div>
                   <button
@@ -204,7 +204,7 @@ export default function TomorrowHeadlinesPage() {
                     onClick={handleGenerateHeadline}
                     disabled={isGenerating}
                   >
-                    {isGenerating ? '生成中...' : '生成头条'}
+                    {isGenerating ? 'Generating...' : 'Generate Headline'}
                   </button>
                 </div>
               </div>
@@ -216,14 +216,14 @@ export default function TomorrowHeadlinesPage() {
         <div className="w-1/2 bg-white rounded-xl shadow flex flex-col min-h-0">
           {/* 标题 */}
           <div className="flex-none p-4 bg-gray-100 rounded-t-xl">
-            <div className="text-lg text-gray-700">生成的头条</div>
+            <div className="text-lg text-gray-700">Generated Headline</div>
           </div>
 
           {/* 头条内容 */}
           <div className="flex-1 overflow-auto p-4">
             {isGenerating ? (
               <div className="flex items-center justify-center h-full">
-                <div className="text-gray-500">正在生成头条图片...</div>
+                <div className="text-gray-500">Generating headline image...</div>
               </div>
             ) : generatedImage ? (
               <div className="space-y-4">
@@ -235,7 +235,7 @@ export default function TomorrowHeadlinesPage() {
               </div>
             ) : (
               <div className="bg-gray-100 p-4 rounded-lg">
-                <p className="text-gray-500 text-center">点击左侧"生成头条"按钮开始生成</p>
+                <p className="text-gray-500 text-center">Click the "Generate Headline" button on the left to start generating</p>
               </div>
             )}
           </div>
@@ -244,9 +244,9 @@ export default function TomorrowHeadlinesPage() {
           <div className="flex-none p-4 flex justify-end">
             <button
               className="bg-[#5157E8] text-white px-8 py-3 rounded-full shadow-lg text-lg hover:bg-[#3a3fa0] transition-all"
-              onClick={() => alert('完成工作坊')}
+              onClick={() => alert('Complete Workshop')}
             >
-              完成
+              Complete Workshop
             </button>
           </div>
         </div>

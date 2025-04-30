@@ -16,18 +16,18 @@ const steps = [
 const magicIfTemplates = [
   {
     id: 1,
-    title: "内容镜像",
-    prompt: "请帮我从内容镜像的角度分析这个解释，探讨它如何反映当前社会现象的未来演变。"
+    title: "Content Mirror",
+    prompt: "Please help me analyze this interpretation from the perspective of content mirroring, exploring how it reflects the future evolution of current social phenomena."
   },
   {
     id: 2,
-    title: "前瞻增强",
-    prompt: "请从前瞻性的角度增强这个解释，探讨它可能带来的长期影响和社会变革。"
+    title: "Future Enhancement",
+    prompt: "Please enhance this interpretation from a forward-looking perspective, exploring its potential long-term impact and social changes."
   },
   {
     id: 3,
-    title: "跨界联想",
-    prompt: "请帮我联想这个解释在不同领域可能产生的连锁反应和创新机会。"
+    title: "Cross-border association",
+    prompt: "Please help me associate this explanation with the possible chain reactions and innovation opportunities it may generate in different fields."
   }
 ];
 
@@ -52,9 +52,9 @@ interface ChatResponse {
 // 添加示例数据
 const EXAMPLE_PROTOTYPING_CARDS = [
   {
-    issue: "老龄社会下医疗资源严重不足",
-    prototyping: "居民与AI医生共同参与分诊与健康决策",
-    signal: '已有国家启用"对话式AI医生"进行初筛与日常健康评估'
+    issue: "Medical resources are seriously insufficient in an aging society",
+    prototyping: "Residents and AI doctors jointly participate in triage and health decision-making",
+    signal: 'The country has already enabled "dialogue-based AI doctors" for initial screening and routine health assessments'
   }
 ];
 
@@ -121,7 +121,7 @@ export default function InterpretationPage() {
 
   const generatePrototypingCard = () => {
     if (!selectedData.futureSignal || !selectedData.localChallenge) {
-      return "请先选择未来信号和地方挑战";
+      return "Please select the future signal and local challenge first";
     }
     
     // 随机选择一个示例
@@ -131,16 +131,16 @@ export default function InterpretationPage() {
 
   const generateInterpretation = () => {
     if (!selectedData.futureSignal || !selectedData.localChallenge || !prototypingCard) {
-      return "请先生成原型构想";
+      return "Please generate the prototyping card first";
     }
 
     // 使用模板生成解释
-    return `在未来，[${selectedData.localChallenge.title}] 会 [${prototypingCard}]，因为 [${selectedData.futureSignal.title}]。`;
+    return `In the future, [${selectedData.localChallenge.title}] will [${prototypingCard}] because [${selectedData.futureSignal.title}]`;
   };
 
   const handleGeneratePrototyping = async () => {
     if (!selectedData.futureSignal || !selectedData.localChallenge) {
-      alert('请先选择 Future Signal 和 Local Challenge');
+      alert('Please select the Future Signal and Local Challenge first');
       return;
     }
     
@@ -160,8 +160,8 @@ export default function InterpretationPage() {
         throw new Error('Invalid response data');
       }
     } catch (error) {
-      console.error('生成原型时出错:', error);
-      alert('生成原型时出现错误，请重试');
+      console.error('An error occurred while generating the prototyping card. Please try again.');
+      alert('An error occurred while generating the prototyping card. Please try again.');
     } finally {
       setIsPrototypingLoading(false);
     }
@@ -169,7 +169,7 @@ export default function InterpretationPage() {
 
   const handleGenerateInterpretation = async () => {
     if (!prototypingCard || !selectedData.futureSignal || !selectedData.localChallenge) {
-      alert('请确保已选择所有必要的内容');
+      alert('Please ensure all necessary content has been selected');
       return;
     }
     
@@ -187,8 +187,8 @@ export default function InterpretationPage() {
         throw new Error('Invalid response data');
       }
     } catch (error) {
-      console.error('生成解释时出错:', error);
-      alert('生成解释时出现错误，请重试');
+      console.error('An error occurred while generating the interpretation. Please try again.');
+      alert('An error occurred while generating the interpretation. Please try again.');
     } finally {
       setIsInterpretationLoading(false);
     }
@@ -215,8 +215,8 @@ export default function InterpretationPage() {
         throw new Error('Invalid response data');
       }
     } catch (error) {
-      console.error('发送消息时出错:', error);
-      alert('发送消息时出现错误，请重试');
+      console.error('An error occurred while sending the message. Please try again.');
+      alert('An error occurred while sending the message. Please try again.');
     } finally {
       setIsChatLoading(false);
     }
@@ -229,7 +229,7 @@ export default function InterpretationPage() {
 
   const handleNextStep = () => {
     if (!interpretation) {
-      alert('请先生成或输入解释内容');
+      alert('Please generate or input the interpretation content first');
       return;
     }
 
@@ -242,7 +242,7 @@ export default function InterpretationPage() {
       router.push('/tomorrow-headlines');
     } catch (error) {
       console.error('Error saving interpretation data:', error);
-      alert('保存数据时出现错误，请重试');
+      alert('An error occurred while saving the data. Please try again.');
     }
   };
 
@@ -258,7 +258,7 @@ export default function InterpretationPage() {
           <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          <span>返回上一步</span>
+          <span>Back to the previous step</span>
         </Link>
         <div className="flex items-center bg-[#C9D6F7]/20 rounded-full px-8 py-2 gap-6">
           {steps.map((step) => (
@@ -300,7 +300,7 @@ export default function InterpretationPage() {
           {/* 标题 */}
           <div className="flex-none p-4">
             <div className="mb-2">
-              <span className="text-lg font-bold text-[#5157E8]">未来解释画布</span>
+              <span className="text-lg font-bold text-[#5157E8]">Future Interpretation Canvas</span>
             </div>
             <div className="border-b border-gray-200" />
           </div>
@@ -313,7 +313,7 @@ export default function InterpretationPage() {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <div className="flex items-center justify-center px-2 py-1 bg-[#5157E8] text-white text-xs rounded">
-                      <span>A: 某社会主体/问题</span>
+                      <span>A: A social subject/problem</span>
                     </div>
                     <h3 className="text-lg font-medium">Future Signal</h3>
                   </div>
@@ -321,14 +321,14 @@ export default function InterpretationPage() {
                     href="/future-signals"
                     className="px-3 py-1 text-sm text-[#5157E8] hover:text-[#3a3fa0] border border-[#5157E8] hover:border-[#3a3fa0] rounded-lg transition-colors"
                   >
-                    重新选择
+                    Re-select
                   </Link>
                 </div>
                 <div className="text-gray-600">
                   {selectedData.futureSignal?.title ? (
                     <div className="font-medium">{selectedData.futureSignal.title}</div>
                   ) : (
-                    <div className="text-red-500">请先选择 Future Signal</div>
+                    <div className="text-red-500">Please select the Future Signal first</div>
                   )}
                 </div>
               </div>
@@ -338,7 +338,7 @@ export default function InterpretationPage() {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <div className="flex items-center justify-center px-2 py-1 bg-[#5157E8] text-white text-xs rounded">
-                      <span>B: 呈现出的趋势或变化行为</span>
+                      <span>B: The trend or change behavior</span>
                     </div>
                     <h3 className="text-lg font-medium">Prototyping Card</h3>
                   </div>
@@ -347,19 +347,19 @@ export default function InterpretationPage() {
                     onClick={handleGeneratePrototyping}
                     disabled={!selectedData.futureSignal || !selectedData.localChallenge}
                   >
-                    重新生成
+                    Re-generate
                   </button>
                 </div>
                 <div className="min-h-[80px] bg-gray-50 rounded p-3">
                   {isPrototypingLoading ? (
                     <div className="flex items-center justify-center h-full text-gray-500">
-                      生成中...
+                      Generating...
                     </div>
                   ) : prototypingCard ? (
                     <div className="text-gray-700">{prototypingCard}</div>
                   ) : (
                     <div className="flex items-center justify-center h-full text-gray-500">
-                      点击"重新生成"按钮生成 Prototyping
+                      Click the "Re-generate" button to generate Prototyping
                     </div>
                   )}
                 </div>
@@ -370,7 +370,7 @@ export default function InterpretationPage() {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <div className="flex items-center justify-center px-2 py-1 bg-[#5157E8] text-white text-xs rounded">
-                      <span>C: 未来信号/变动因子</span>
+                      <span>C: Future signal/change factor</span>
                     </div>
                     <h3 className="text-lg font-medium">Local Challenge</h3>
                   </div>
@@ -378,7 +378,7 @@ export default function InterpretationPage() {
                     href="/local-challenges"
                     className="px-3 py-1 text-sm text-[#5157E8] hover:text-[#3a3fa0] border border-[#5157E8] hover:border-[#3a3fa0] rounded-lg transition-colors"
                   >
-                    重新选择
+                    Re-select
                   </Link>
                 </div>
                 <div className="text-gray-600">
@@ -388,7 +388,7 @@ export default function InterpretationPage() {
                       <div className="text-sm mt-1">{selectedData.localChallenge.description}</div>
                     </div>
                   ) : (
-                    <div className="text-red-500">请先选择 Local Challenge</div>
+                    <div className="text-red-500">Please select the Local Challenge first</div>
                   )}
                 </div>
               </div>
@@ -402,20 +402,20 @@ export default function InterpretationPage() {
                     onClick={handleGenerateInterpretation}
                     disabled={!canGenerateInterpretation}
                   >
-                    生成解释
+                    Generate Interpretation
                   </button>
                 </div>
                 <div className="min-h-[120px] bg-white rounded p-3 border border-gray-200">
                   {isInterpretationLoading ? (
                     <div className="flex items-center justify-center h-full text-gray-500">
-                      生成中...
+                      Generating...
                     </div>
                   ) : (
                     <textarea
                       className="w-full h-full min-h-[100px] text-gray-700 focus:outline-none resize-none"
                       value={interpretation}
                       onChange={(e) => setInterpretation(e.target.value)}
-                      placeholder='点击"生成解释"按钮生成 Interpretation，或直接在此输入...'
+                      placeholder='Click the "Generate Interpretation" button to generate Interpretation, or directly input here...'
                     />
                   )}
                 </div>
@@ -427,14 +427,14 @@ export default function InterpretationPage() {
         {/* 右侧对话区 */}
         <div className="w-1/2 bg-white rounded-xl shadow flex flex-col min-h-0">
           <div className="flex-none p-4 border-b border-gray-200">
-            <h3 className="text-lg font-bold text-[#5157E8]">AI 助手</h3>
+            <h3 className="text-lg font-bold text-[#5157E8]">AI Assistant</h3>
           </div>
 
           {/* 对话历史 */}
           <div className="flex-1 overflow-auto p-4 space-y-4">
             {!interpretation ? (
               <div className="flex items-center justify-center h-full text-gray-500">
-                请先生成 Interpretation 后开始对话
+                Please generate Interpretation first
               </div>
             ) : (
               <>
@@ -492,7 +492,7 @@ export default function InterpretationPage() {
                 {isChatLoading && (
                   <div className="flex justify-start">
                     <div className="bg-gray-100 text-gray-700 p-3 rounded-lg">
-                      正在思考...
+                      Thinking...
                     </div>
                   </div>
                 )}
@@ -506,7 +506,7 @@ export default function InterpretationPage() {
               <>
                 {/* 提示词模板 */}
                 <div className="space-y-2">
-                  <div className="text-sm font-medium text-gray-700">Magic If 提示词</div>
+                  <div className="text-sm font-medium text-gray-700">Magic If Prompt</div>
                   <div className="flex flex-wrap gap-2">
                     {magicIfTemplates.map(template => (
                       <button
@@ -525,7 +525,7 @@ export default function InterpretationPage() {
                   <input
                     type="text"
                     className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5157E8] focus:border-transparent"
-                    placeholder="输入您的问题..."
+                    placeholder="Input your question..."
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
@@ -556,7 +556,7 @@ export default function InterpretationPage() {
           onClick={handleNextStep}
           disabled={!interpretation}
         >
-          下一步
+          Next Step
         </button>
       </div>
     </div>

@@ -13,13 +13,13 @@ const steps = [
 ];
 
 const VIEW_TYPES = [
-  { key: 'gallery', label: '画廊视图', icon: (
+  { key: 'gallery', label: 'Gallery View', icon: (
     <svg className="inline-block mr-1" width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="5" height="5" rx="1" fill="currentColor"/><rect x="12" y="3" width="5" height="5" rx="1" fill="currentColor"/><rect x="3" y="12" width="5" height="5" rx="1" fill="currentColor"/><rect x="12" y="12" width="5" height="5" rx="1" fill="currentColor"/></svg>
   ) },
-  { key: 'table', label: '表格视图', icon: (
+  { key: 'table', label: 'Table View', icon: (
     <svg className="inline-block mr-1" width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="3" rx="1" fill="currentColor"/><rect x="3" y="8.5" width="14" height="3" rx="1" fill="currentColor"/><rect x="3" y="14" width="14" height="3" rx="1" fill="currentColor"/></svg>
   ) },
-  { key: 'board', label: '看板视图', icon: (
+  { key: 'board', label: 'Board View', icon: (
     <svg className="inline-block mr-1" width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="4" height="14" rx="1" fill="currentColor"/><rect x="9" y="3" width="4" height="14" rx="1" fill="currentColor"/><rect x="15" y="3" width="2" height="14" rx="1" fill="currentColor"/></svg>
   ) },
 ];
@@ -73,7 +73,7 @@ export default function FutureSignalsPage() {
   if (loading) {
     return (
       <div className="h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-xl text-gray-600">加载中...</div>
+        <div className="text-xl text-gray-600">Loading...</div>
       </div>
     );
   }
@@ -98,7 +98,7 @@ export default function FutureSignalsPage() {
           <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          <span>返回首页</span>
+          <span>Back to Home</span>
         </Link>
         <div className="flex items-center bg-[#F3F4FD] rounded-full px-8 py-2 gap-6">
           {steps.map((step) => (
@@ -131,7 +131,7 @@ export default function FutureSignalsPage() {
           {/* 标题和视图切换 */}
           <div className="flex-none p-4">
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-xl font-bold text-[#5157E8]">未来信号库</span>
+              <span className="text-xl font-bold text-[#5157E8]">Future Signal Library</span>
               <div className="flex gap-2 items-center bg-gray-100 rounded-lg p-1">
                 {VIEW_TYPES.map(v => (
                   <button
@@ -199,9 +199,9 @@ export default function FutureSignalsPage() {
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-[#F3F4FD]">
                     <tr className="text-[#5157E8]">
-                      <th className="p-3 text-left font-medium">信号</th>
-                      <th className="p-3 text-left font-medium">标题</th>
-                      <th className="p-3 text-left font-medium">摘要</th>
+                      <th className="p-3 text-left font-medium">Signal</th>
+                      <th className="p-3 text-left font-medium">Title</th>
+                      <th className="p-3 text-left font-medium">Summary</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -281,7 +281,7 @@ export default function FutureSignalsPage() {
                 <div className="text-gray-500 text-sm whitespace-pre-line">{selected.detail}</div>
               </>
             ) : (
-              <div className="text-center text-gray-400">请选择左侧卡片</div>
+              <div className="text-center text-gray-400">Please select the card on the left</div>
             )}
           </div>
           {/* 底部确认按钮 */}
@@ -301,7 +301,7 @@ export default function FutureSignalsPage() {
                 router.push('/local-challenges');
               }}
             >
-              下一步
+              Next Step
             </button>
           </div>
         </div>

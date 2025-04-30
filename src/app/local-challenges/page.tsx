@@ -17,6 +17,7 @@ interface Challenge {
   title: string;
   description: string;
   isUserCreated?: boolean;
+  isAIGenerated?: boolean;
 }
 
 interface FormError {
@@ -39,18 +40,18 @@ const initialChallenges: Challenge[] = [
 const promptTemplates = [
   {
     id: 1,
-    title: "会津地区的人口挑战",
-    prompt: "作为一个了解会津地区的专家，请分析会津地区在人口方面面临的主要挑战，包括人口老龄化、人才流失等问题。"
+    title: "Population Challenges in Aizu Region",
+    prompt: "As an expert familiar with the Aizu region, please analyze the main population challenges faced by Aizu, including aging population and talent outflow."
   },
   {
     id: 2,
-    title: "会津地区的产业发展",
-    prompt: "请分析会津地区的传统产业现状，以及在数字化转型中可能面临的挑战和机遇。"
+    title: "Industrial Development in Aizu Region",
+    prompt: "Please analyze the current situation of traditional industries in Aizu and the challenges and opportunities they may face in digital transformation."
   },
   {
     id: 3,
-    title: "会津地区的文化保护",
-    prompt: "请讨论会津地区在保护传统文化的同时，如何推动文化创新和现代化发展面临的挑战。"
+    title: "Cultural Preservation in Aizu Region",
+    prompt: "Please discuss the challenges Aizu faces in promoting cultural innovation and modernization while preserving traditional culture."
   }
 ];
 
@@ -114,10 +115,10 @@ export default function LocalChallengesPage() {
   const handleAddChallenge = () => {
     const errors: FormError = {};
     if (!newTitle.trim()) {
-      errors.title = '请输入挑战标题';
+      errors.title = 'Please enter the challenge title';
     }
     if (!newDescription.trim()) {
-      errors.description = '请输入挑战描述';
+      errors.description = 'Please enter the challenge description';
     }
 
     if (Object.keys(errors).length > 0) {
@@ -145,7 +146,7 @@ export default function LocalChallengesPage() {
   const handleSendMessage = async () => {
     if (!chatInput.trim() || !selectedChallenge) {
       if (!selectedChallenge) {
-        const errorResponse = { role: 'assistant' as const, content: '请先选择一个地方挑战。' };
+        const errorResponse = { role: 'assistant' as const, content: 'Please choose the challenge of a place first.' };
         setChatHistory(prev => [...prev, errorResponse]);
       }
       return;
@@ -169,11 +170,7 @@ export default function LocalChallengesPage() {
           主题：${selectedChallenge.title}
           描述：${selectedChallenge.description}
 
-          请根据用户的问题，结合这个地方挑战的特点，提供专业、有见地的回答。回答要求：
-          1. 紧扣主题
-          2. 具有启发性
-          3. 言简意赅
-          4. 长度控制在100字以内`
+          请根据用户的问题，结合这个地方挑战的特点，提供专业、有见地的回答。`
         })
       });
 
@@ -182,30 +179,45 @@ export default function LocalChallengesPage() {
         data = await response.json();
       } catch (e) {
         console.error('JSON parse error:', e);
-        throw new Error('服务器响应格式错误');
+        throw new Error('The server response format is incorrect');
       }
       
       if (!response.ok) {
-        throw new Error(data.error || '请求失败');
+        throw new Error(data.error || 'Request Failed');
       }
 
       if (data.reply) {
         const aiResponse = { role: 'assistant' as const, content: data.reply };
         setChatHistory(prev => [...prev, aiResponse]);
+
+        // 使用API返回的标题和内容创建新的挑战
+        const newChallenge: Challenge = {
+          id: Math.max(...challenges.map(c => c.id)) + 1,
+          title: data.title || 'New Challenge',
+          description: data.reply,
+          isUserCreated: true,
+          isAIGenerated: true
+        };
+
+        // 添加新挑战到列表
+        setChallenges(prev => [newChallenge, ...prev]);
+
+        // 自动选择新创建的挑战
+        setSelectedId(newChallenge.id);
       } else {
-        throw new Error('服务器返回的数据格式不正确');
+        throw new Error('The server returned data format is incorrect');
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      let errorMessage = '抱歉，发生了错误。请稍后再试。';
+      let errorMessage = 'Sorry, an error occurred. Please try again later.';
       
       if (error instanceof Error) {
-        if (error.message.includes('API认证失败')) {
-          errorMessage = '系统配置错误，请联系管理员。';
-        } else if (error.message.includes('配额不足')) {
-          errorMessage = 'API使用量已达上限，请稍后再试。';
+        if (error.message.includes('API authentication failed')) {
+          errorMessage = 'System configuration error. Please contact the administrator.';
+        } else if (error.message.includes('Quota exceeded')) {
+          errorMessage = 'API usage limit has been reached. Please try again later.';
         } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-          errorMessage = '网络连接错误，请检查网络连接并重试。';
+          errorMessage = 'Network connection error. Please check your network connection and try again.';
         } else {
           errorMessage = error.message;
         }
@@ -224,7 +236,7 @@ export default function LocalChallengesPage() {
 
   const handleNextStep = () => {
     if (!selectedId) {
-      alert('请先选择一个 Local Challenge');
+      alert('Please choose a Local Challenge first');
       return;
     }
 
@@ -283,7 +295,7 @@ export default function LocalChallengesPage() {
         <div className="w-1/2 bg-white rounded-xl shadow-lg flex flex-col min-h-0">
           <div className="flex-none p-4">
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-xl font-bold text-[#5157E8]">地方挑战库</span>
+              <span className="text-xl font-bold text-[#5157E8]">Local Challenge Library</span>
               <button
                 onClick={() => setShowInput(!showInput)}
                 className="text-[#5157E8] hover:text-[#3a3fa0] transition-colors"
@@ -300,7 +312,7 @@ export default function LocalChallengesPage() {
                     type="text"
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
-                    placeholder="输入挑战标题"
+                    placeholder="Enter the challenge title"
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5157E8]"
                   />
                   {formErrors.title && <p className="text-red-500 text-sm mt-1">{formErrors.title}</p>}
@@ -309,7 +321,7 @@ export default function LocalChallengesPage() {
                   <textarea
                     value={newDescription}
                     onChange={(e) => setNewDescription(e.target.value)}
-                    placeholder="输入挑战描述"
+                    placeholder="Enter the challenge description"
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5157E8]"
                     rows={3}
                   />
@@ -319,7 +331,7 @@ export default function LocalChallengesPage() {
                   onClick={handleAddChallenge}
                   className="w-full bg-[#5157E8] text-white py-2 rounded-lg hover:bg-[#3a3fa0] transition-colors"
                 >
-                  添加挑战
+                  Add Challenge
                 </button>
               </div>
             )}
@@ -338,7 +350,14 @@ export default function LocalChallengesPage() {
                   onClick={() => setSelectedId(challenge.id)}
                 >
                   <div className="flex items-center justify-between">
-                    <h3 className="text-base font-medium text-[#5157E8]">{challenge.title}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-medium text-[#5157E8]">{challenge.title}</h3>
+                      {challenge.isAIGenerated && (
+                        <span className="px-2 py-1 text-xs bg-purple-100 text-purple-600 rounded-full">
+                          AI Generated
+                        </span>
+                      )}
+                    </div>
                     {challenge.isUserCreated && (
                       <button
                         onClick={(e) => {
@@ -363,10 +382,10 @@ export default function LocalChallengesPage() {
         {/* 右侧AI助手对话区 */}
         <div className="w-1/2 bg-white rounded-xl shadow-lg flex flex-col min-h-0">
           <div className="flex-none p-4 border-b">
-            <h2 className="text-xl font-bold text-[#5157E8]">AI 助手</h2>
+            <h2 className="text-xl font-bold text-[#5157E8]">AI Assistant</h2>
             {selectedChallenge && (
               <div className="mt-2 text-gray-600">
-                当前选中的命题：
+                Current selected topic:
                 <div className="font-medium text-[#23272E]">{selectedChallenge.title}</div>
                 <div className="text-sm">{selectedChallenge.description}</div>
               </div>
@@ -400,7 +419,7 @@ export default function LocalChallengesPage() {
                   <div className={`w-10 h-10 rounded-full flex-none ${
                     message.role === 'user' ? 'bg-[#5157E8]' : 'bg-[#10B981]'
                   } flex items-center justify-center text-white`}>
-                    {message.role === 'user' ? '我' : 'AI'}
+                    {message.role === 'user' ? 'Me' : 'AI'}
                   </div>
                   {/* 消息气泡 */}
                   <div className={`py-2 px-4 rounded-2xl ${
@@ -420,7 +439,7 @@ export default function LocalChallengesPage() {
                     AI
                   </div>
                   <div className="py-2 px-4 rounded-2xl bg-gray-100 text-gray-700 rounded-tl-none">
-                    思考中...
+                    Thinking...
                   </div>
                 </div>
               </div>
@@ -450,7 +469,7 @@ export default function LocalChallengesPage() {
                   isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#3a3fa0]'
                 }`}
               >
-                发送
+                Send
               </button>
             </div>
           </div>
@@ -463,7 +482,7 @@ export default function LocalChallengesPage() {
           onClick={handleNextStep}
           className="bg-[#5157E8] text-white px-8 py-3 rounded-full shadow-lg text-lg hover:bg-[#3a3fa0] transition-all"
         >
-          下一步
+          Next Step
         </button>
       </div>
     </div>
