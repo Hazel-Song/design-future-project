@@ -228,7 +228,7 @@ export default function LocalChallengesPage() {
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
       {/* 顶部进度条 */}
-      <div className="flex-none w-full flex justify-center py-8 relative">
+      <div className="flex-none w-full flex justify-center py-6 relative bg-white shadow-sm">
         {/* 返回按钮 */}
         <Link 
           href="/future-signals" 
@@ -239,32 +239,24 @@ export default function LocalChallengesPage() {
           </svg>
           <span>返回上一步</span>
         </Link>
-        <div className="flex items-center bg-[#C9D6F7]/20 rounded-full px-8 py-2 gap-6">
+        <div className="flex items-center bg-[#F3F4FD] rounded-full px-8 py-2 gap-6">
           {steps.map((step) => (
             <Link
               key={step.id}
               href={step.path}
-              className={`flex items-center gap-2 group transition-colors ${
+              className={`flex items-center gap-2 group transition-all duration-300 ${
                 step.current ? 'cursor-default' : 'hover:text-[#5157E8]'
               }`}
             >
               <div 
                 className={`w-8 h-8 flex items-center justify-center rounded-full text-white text-base
-                  ${step.completed ? 'bg-[#B3B8D8] group-hover:bg-[#5157E8]' : 
-                    step.current ? 'bg-[#5157E8]' : 
-                    'bg-[#B3B8D8] group-hover:bg-[#5157E8]'} transition-colors`}
+                  ${step.current ? 'bg-[#5157E8] shadow-lg' : 'bg-[#B3B8D8] group-hover:bg-[#5157E8] group-hover:shadow-md'} transition-all duration-300`}
               >
-                {step.completed ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                ) : (
-                  step.id
-                )}
+                {step.id}
               </div>
               <span className={`${
-                step.current ? 'text-[#23272E]' : 'text-[#6B7280] group-hover:text-[#5157E8]'
-              } transition-colors`}>
+                step.current ? 'text-[#23272E] font-medium' : 'text-[#6B7280] group-hover:text-[#5157E8]'
+              } transition-colors duration-300`}>
                 {step.label}
               </span>
             </Link>
@@ -273,155 +265,190 @@ export default function LocalChallengesPage() {
       </div>
 
       {/* 主体内容 */}
-      <div className="flex-1 px-2 min-h-0 flex gap-4">
-        {/* 左侧主要内容区 */}
-        <div className="w-1/2 bg-white rounded-xl shadow flex flex-col min-h-0">
-          {/* 标题和添加按钮 */}
+      <div className="flex-1 flex px-4 gap-6 w-full min-h-0 py-4">
+        {/* 左侧挑战列表 */}
+        <div className="w-1/2 bg-white rounded-xl shadow-lg flex flex-col min-h-0">
           <div className="flex-none p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-lg font-bold text-[#5157E8]">地方挑战库</span>
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-xl font-bold text-[#5157E8]">地方挑战库</span>
               <button
-                className="text-[#5157E8] hover:text-[#3a3fa0] transition-colors p-2 rounded-full hover:bg-gray-100"
-                onClick={() => setShowInput(true)}
+                onClick={() => setShowInput(!showInput)}
+                className="text-[#5157E8] hover:text-[#3a3fa0] transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
               </button>
             </div>
+            {showInput && (
+              <div className="mb-4 space-y-4 p-4 bg-gray-50 rounded-lg">
+                <div>
+                  <input
+                    type="text"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="输入挑战标题"
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5157E8]"
+                  />
+                  {formErrors.title && <p className="text-red-500 text-sm mt-1">{formErrors.title}</p>}
+                </div>
+                <div>
+                  <textarea
+                    value={newDescription}
+                    onChange={(e) => setNewDescription(e.target.value)}
+                    placeholder="输入挑战描述"
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5157E8]"
+                    rows={3}
+                  />
+                  {formErrors.description && <p className="text-red-500 text-sm mt-1">{formErrors.description}</p>}
+                </div>
+                <button
+                  onClick={handleAddChallenge}
+                  className="w-full bg-[#5157E8] text-white py-2 rounded-lg hover:bg-[#3a3fa0] transition-colors"
+                >
+                  添加挑战
+                </button>
+              </div>
+            )}
             <div className="border-b border-gray-200" />
           </div>
-
-          {/* 新建输入框 */}
-          {showInput && (
-            <div className="flex-none p-4 border-b border-gray-200">
-              <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">标题</label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-[#5157E8] focus:border-transparent
-                        ${formErrors.title ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
-                      placeholder="请输入挑战标题..."
-                      value={newTitle}
-                      onChange={(e) => {
-                        setNewTitle(e.target.value);
-                        setFormErrors(prev => ({ ...prev, title: undefined }));
-                      }}
-                    />
-                    {formErrors.title && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                  {formErrors.title && (
-                    <p className="mt-1 text-sm text-red-500">{formErrors.title}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">详细描述</label>
-                  <div className="relative">
-                    <textarea
-                      className={`w-full h-32 p-2 border rounded-lg focus:ring-2 focus:ring-[#5157E8] focus:border-transparent
-                        ${formErrors.description ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
-                      placeholder="请输入挑战描述..."
-                      value={newDescription}
-                      onChange={(e) => {
-                        setNewDescription(e.target.value);
-                        setFormErrors(prev => ({ ...prev, description: undefined }));
-                      }}
-                    />
-                    {formErrors.description && (
-                      <div className="absolute right-3 top-3 text-red-500">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                  {formErrors.description && (
-                    <p className="mt-1 text-sm text-red-500">{formErrors.description}</p>
-                  )}
-                </div>
-                <div className="flex justify-end gap-2">
-                  <button
-                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                    onClick={() => {
-                      setShowInput(false);
-                      setNewTitle('');
-                      setNewDescription('');
-                      setFormErrors({});
-                    }}
-                  >
-                    取消
-                  </button>
-                  <button
-                    className="px-4 py-2 bg-[#5157E8] text-white rounded-lg hover:bg-[#3a3fa0] transition-colors"
-                    onClick={handleAddChallenge}
-                  >
-                    确定
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 挑战列表 */}
           <div className="flex-1 overflow-auto p-4">
-            <div className="flex flex-col gap-2">
-              {challenges.map(challenge => (
+            <div className="space-y-3">
+              {challenges.map((challenge) => (
                 <div
                   key={challenge.id}
-                  className={`group cursor-pointer border-l-4 p-3 bg-[#F9FAFB] hover:bg-gray-50 ${
-                    selectedId === challenge.id ? 'border-[#5157E8] bg-[#F3F4FD]' : 'border-gray-200'
+                  className={`cursor-pointer p-3 rounded-lg transition-all duration-300 ${
+                    selectedId === challenge.id
+                      ? 'bg-[#F3F4FD] border-l-4 border-[#5157E8] shadow-md'
+                      : 'hover:bg-gray-50 border-l-4 border-transparent'
                   }`}
                   onClick={() => setSelectedId(challenge.id)}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500">挑战 {challenge.id}</span>
-                      <div className="text-[#5157E8]">{challenge.title}</div>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-base font-medium text-[#5157E8]">{challenge.title}</h3>
                     {challenge.isUserCreated && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">用户添加</span>
-                        <button
-                          className="text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(challenge.id);
-                          }}
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(challenge.id);
+                        }}
+                        className="text-gray-400 hover:text-red-500 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                     )}
                   </div>
-                  <div className="text-xs text-gray-500 mt-1 line-clamp-2">{challenge.description}</div>
+                  <p className="text-gray-600 mt-1 text-sm">{challenge.description}</p>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* 右侧对话区 */}
-        <div className="w-1/3 p-4 border-l">
-          <ChatInterface selectedChallenge={selectedChallenge} />
+        {/* 右侧AI助手对话区 */}
+        <div className="w-1/2 bg-white rounded-xl shadow-lg flex flex-col min-h-0">
+          <div className="flex-none p-4 border-b">
+            <h2 className="text-xl font-bold text-[#5157E8]">AI 助手</h2>
+            {selectedChallenge && (
+              <div className="mt-2 text-gray-600">
+                当前选中的命题：
+                <div className="font-medium text-[#23272E]">{selectedChallenge.title}</div>
+                <div className="text-sm">{selectedChallenge.description}</div>
+              </div>
+            )}
+          </div>
+
+          {/* 预设提示词区域 */}
+          <div className="flex-none px-4 py-3 border-b bg-gray-50">
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {promptTemplates.map(template => (
+                <button
+                  key={template.id}
+                  onClick={() => usePromptTemplate(template.prompt)}
+                  className="flex-none px-4 py-2 bg-white rounded-full text-sm text-gray-600 hover:text-[#5157E8] hover:shadow transition-all whitespace-nowrap border hover:border-[#5157E8]"
+                >
+                  {template.title}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 对话历史区域 */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {chatHistory.map((message, index) => (
+              <div
+                key={index}
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div className={`flex items-start gap-3 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                  {/* 头像 */}
+                  <div className={`w-10 h-10 rounded-full flex-none ${
+                    message.role === 'user' ? 'bg-[#5157E8]' : 'bg-[#10B981]'
+                  } flex items-center justify-center text-white`}>
+                    {message.role === 'user' ? '我' : 'AI'}
+                  </div>
+                  {/* 消息气泡 */}
+                  <div className={`py-2 px-4 rounded-2xl ${
+                    message.role === 'user' 
+                      ? 'bg-[#5157E8] text-white rounded-tr-none' 
+                      : 'bg-gray-100 text-gray-700 rounded-tl-none'
+                  }`}>
+                    {message.content}
+                  </div>
+                </div>
+              </div>
+            ))}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="flex items-start gap-3 max-w-[80%]">
+                  <div className="w-10 h-10 rounded-full bg-[#10B981] flex-none flex items-center justify-center text-white">
+                    AI
+                  </div>
+                  <div className="py-2 px-4 rounded-2xl bg-gray-100 text-gray-700 rounded-tl-none">
+                    思考中...
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 输入区域 */}
+          <div className="flex-none p-4 border-t bg-gray-50">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                placeholder="输入您的问题..."
+                className="flex-1 px-4 py-3 rounded-full border focus:outline-none focus:ring-2 focus:ring-[#5157E8] bg-white"
+              />
+              <button
+                onClick={handleSendMessage}
+                disabled={isLoading}
+                className={`px-6 py-3 rounded-full bg-[#5157E8] text-white transition-all ${
+                  isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#3a3fa0]'
+                }`}
+              >
+                发送
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* 固定在右下角的下一步按钮 */}
-      <div className="fixed bottom-8 right-8">
+      {/* 底部按钮 */}
+      <div className="flex-none px-4 py-4 flex justify-end">
         <button
-          className="bg-[#5157E8] text-white px-8 py-3 rounded-full shadow-lg text-lg hover:bg-[#3a3fa0] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={handleNextStep}
-          disabled={!selectedId}
+          className="bg-[#5157E8] text-white px-8 py-3 rounded-full shadow-lg text-lg hover:bg-[#3a3fa0] transition-all"
         >
           下一步
         </button>

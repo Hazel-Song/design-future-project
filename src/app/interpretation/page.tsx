@@ -48,6 +48,15 @@ interface ChatResponse {
   reply: string;
 }
 
+// 添加示例数据
+const EXAMPLE_PROTOTYPING_CARDS = [
+  {
+    issue: "老龄社会下医疗资源严重不足",
+    prototyping: "居民与AI医生共同参与分诊与健康决策",
+    signal: '已有国家启用"对话式AI医生"进行初筛与日常健康评估'
+  }
+];
+
 export default function InterpretationPage() {
   const router = useRouter();
   const [selectedData, setSelectedData] = useState<SelectedData>({
@@ -109,6 +118,25 @@ export default function InterpretationPage() {
     console.log('Current Selected Data:', selectedData);
   }, [selectedData]);
 
+  const generatePrototypingCard = () => {
+    if (!selectedData.futureSignal || !selectedData.localChallenge) {
+      return "请先选择未来信号和地方挑战";
+    }
+    
+    // 随机选择一个示例
+    const example = EXAMPLE_PROTOTYPING_CARDS[Math.floor(Math.random() * EXAMPLE_PROTOTYPING_CARDS.length)];
+    return example.prototyping;
+  };
+
+  const generateInterpretation = () => {
+    if (!selectedData.futureSignal || !selectedData.localChallenge || !prototypingCard) {
+      return "请先生成原型构想";
+    }
+
+    // 使用模板生成解释
+    return `在未来，[${selectedData.localChallenge.title}] 会 [${prototypingCard}]，因为 [${selectedData.futureSignal.title}]。`;
+  };
+
   const handleGeneratePrototyping = async () => {
     if (!selectedData.futureSignal || !selectedData.localChallenge) {
       alert('请先选择 Future Signal 和 Local Challenge');
@@ -117,33 +145,13 @@ export default function InterpretationPage() {
     
     setIsPrototypingLoading(true);
     try {
-      // 添加日志来调试
-      console.log('Sending request with data:', {
-        futureSignal: selectedData.futureSignal,
-        localChallenge: selectedData.localChallenge
-      });
-
-      const response = await axios.post('/api/generate-prototyping', {
-        futureSignal: selectedData.futureSignal,
-        localChallenge: selectedData.localChallenge
-      });
-      
-      console.log('Received response:', response.data);
-
-      if (response.data && response.data.prototypingCard) {
-        setPrototypingCard(response.data.prototypingCard);
-        setCanGenerateInterpretation(true);
-      } else {
-        throw new Error('无效的响应数据');
-      }
+      // 使用示例数据生成
+      const generatedCard = generatePrototypingCard();
+      setPrototypingCard(generatedCard);
+      setCanGenerateInterpretation(true);
     } catch (error) {
       console.error('生成原型时出错:', error);
-      // 显示更详细的错误信息
-      if (axios.isAxiosError(error)) {
-        alert(`生成原型时出现错误: ${error.response?.data?.error || error.message}`);
-      } else {
-        alert('生成原型时出现错误，请重试');
-      }
+      alert('生成原型时出现错误，请重试');
     } finally {
       setIsPrototypingLoading(false);
     }
@@ -156,17 +164,9 @@ export default function InterpretationPage() {
     }
     setIsInterpretationLoading(true);
     try {
-      const response = await axios.post<InterpretationResponse>('/api/generate-interpretation', {
-        futureSignal: selectedData.futureSignal,
-        localChallenge: selectedData.localChallenge,
-        prototypingCard
-      });
-      
-      if (response.data && response.data.interpretation) {
-        setInterpretation(response.data.interpretation);
-      } else {
-        throw new Error('无效的响应数据');
-      }
+      // 使用示例数据生成
+      const generatedInterpretation = generateInterpretation();
+      setInterpretation(generatedInterpretation);
     } catch (error) {
       console.error('生成解释时出错:', error);
       alert('生成解释时出现错误，请重试');
@@ -300,14 +300,12 @@ export default function InterpretationPage() {
                     </div>
                     <h3 className="text-lg font-medium">Future Signal</h3>
                   </div>
-                  {!selectedData.futureSignal?.title && (
-                    <Link 
-                      href="/future-signals"
-                      className="text-[#5157E8] hover:text-[#3a3fa0] text-sm"
-                    >
-                      去选择
-                    </Link>
-                  )}
+                  <Link 
+                    href="/future-signals"
+                    className="px-3 py-1 text-sm text-[#5157E8] hover:text-[#3a3fa0] border border-[#5157E8] hover:border-[#3a3fa0] rounded-lg transition-colors"
+                  >
+                    重新选择
+                  </Link>
                 </div>
                 <div className="text-gray-600">
                   {selectedData.futureSignal?.title ? (
@@ -359,14 +357,12 @@ export default function InterpretationPage() {
                     </div>
                     <h3 className="text-lg font-medium">Local Challenge</h3>
                   </div>
-                  {!selectedData.localChallenge?.title && (
-                    <Link 
-                      href="/local-challenges"
-                      className="text-[#5157E8] hover:text-[#3a3fa0] text-sm"
-                    >
-                      去选择
-                    </Link>
-                  )}
+                  <Link 
+                    href="/local-challenges"
+                    className="px-3 py-1 text-sm text-[#5157E8] hover:text-[#3a3fa0] border border-[#5157E8] hover:border-[#3a3fa0] rounded-lg transition-colors"
+                  >
+                    重新选择
+                  </Link>
                 </div>
                 <div className="text-gray-600">
                   {selectedData.localChallenge?.title ? (

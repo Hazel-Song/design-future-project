@@ -5,6 +5,8 @@ import type { ChatCompletionMessageParam } from 'openai/resources';
 // 创建OpenAI客户端实例
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+  timeout: 60000, // 设置60秒超时
+  maxRetries: 3,  // 最大重试次数
 });
 
 export async function POST(request: Request) {
@@ -113,8 +115,10 @@ export async function POST(request: Request) {
           });
           
           if (retries > 1) {
-            // 等待一段时间后重试
-            await new Promise(resolve => setTimeout(resolve, 1000 * (4 - retries)));
+            // 使用指数退避策略
+            const delay = Math.pow(2, 4 - retries) * 1000; // 1秒, 2秒, 4秒
+            console.log(`等待 ${delay/1000} 秒后重试...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
           }
           retries--;
         }

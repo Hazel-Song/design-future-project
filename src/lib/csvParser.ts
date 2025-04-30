@@ -18,11 +18,14 @@ export async function fetchFutureSignals(): Promise<FutureSignal[]> {
     const rows = parseCSV(csvText);
     const headers = rows[0];
     
-    console.log('Total rows in CSV:', rows.length - 1); // 调试信息
+    console.log('CSV Headers:', headers);
+    console.log('Total rows in CSV:', rows.length - 1);
     
     const signals = rows.slice(1) // 跳过标题行
-      .filter(row => row.some(cell => cell.trim())) // 保留这个过滤器
       .map((row, index) => {
+        // 调试信息
+        console.log(`Processing row ${index + 1}:`, row);
+        
         const signal: any = {};
         headers.forEach((header, colIndex) => {
           const value = row[colIndex] || '';
@@ -42,7 +45,6 @@ export async function fetchFutureSignals(): Promise<FutureSignal[]> {
             const imageName = cleanValue.split('/').pop() || '';
             const validImageName = imageName.split(' ')[0];
             signal[header.trim()] = `/images/future-signals/${validImageName}`;
-            console.log('Processing image:', signal[header.trim()]);
             return;
           }
 
@@ -52,7 +54,10 @@ export async function fetchFutureSignals(): Promise<FutureSignal[]> {
         return signal as FutureSignal;
       });
 
-    console.log('Processed signals:', signals.length); // 调试信息
+    console.log('Processed signals:', signals.length);
+    console.log('First signal:', signals[0]);
+    console.log('Last signal:', signals[signals.length - 1]);
+    
     return signals;
   } catch (error) {
     console.error('Error loading future signals:', error);
@@ -62,49 +67,44 @@ export async function fetchFutureSignals(): Promise<FutureSignal[]> {
 
 // 解析 CSV 文本为二维数组
 function parseCSV(text: string): string[][] {
+  const lines = text.split(/\r?\n/);
   const rows: string[][] = [];
-  let currentRow: string[] = [];
-  let currentValue = '';
-  let insideQuotes = false;
   
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    const nextChar = text[i + 1];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.trim()) continue; // 跳过空行
     
-    if (char === '"') {
-      if (insideQuotes && nextChar === '"') {
-        // 处理双引号转义
-        currentValue += '"';
-        i++; // 跳过下一个引号
+    const row: string[] = [];
+    let currentValue = '';
+    let insideQuotes = false;
+    
+    for (let j = 0; j < line.length; j++) {
+      const char = line[j];
+      
+      if (char === '"') {
+        if (insideQuotes && line[j + 1] === '"') {
+          // 处理双引号转义
+          currentValue += '"';
+          j++;
+        } else {
+          insideQuotes = !insideQuotes;
+        }
+      } else if (char === ',' && !insideQuotes) {
+        row.push(currentValue.trim());
+        currentValue = '';
       } else {
-        insideQuotes = !insideQuotes;
+        currentValue += char;
       }
-    } else if (char === ',' && !insideQuotes) {
-      currentRow.push(currentValue);
-      currentValue = '';
-    } else if ((char === '\n' || char === '\r') && !insideQuotes) {
-      if (char === '\r' && nextChar === '\n') {
-        i++; // 跳过 \r\n 的 \n
-      }
-      if (currentValue) {
-        currentRow.push(currentValue);
-      }
-      if (currentRow.length > 0) {
-        rows.push(currentRow);
-      }
-      currentRow = [];
-      currentValue = '';
-    } else {
-      currentValue += char;
     }
-  }
-  
-  // 处理最后一个值和行
-  if (currentValue) {
-    currentRow.push(currentValue);
-  }
-  if (currentRow.length > 0) {
-    rows.push(currentRow);
+    
+    // 添加最后一个值
+    if (currentValue) {
+      row.push(currentValue.trim());
+    }
+    
+    if (row.length > 0) {
+      rows.push(row);
+    }
   }
   
   return rows;

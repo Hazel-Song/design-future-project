@@ -13,13 +13,13 @@ const steps = [
 ];
 
 const VIEW_TYPES = [
-  { key: 'gallery', label: 'Gallery', icon: (
+  { key: 'gallery', label: '画廊视图', icon: (
     <svg className="inline-block mr-1" width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="5" height="5" rx="1" fill="currentColor"/><rect x="12" y="3" width="5" height="5" rx="1" fill="currentColor"/><rect x="3" y="12" width="5" height="5" rx="1" fill="currentColor"/><rect x="12" y="12" width="5" height="5" rx="1" fill="currentColor"/></svg>
   ) },
-  { key: 'table', label: 'Table', icon: (
+  { key: 'table', label: '表格视图', icon: (
     <svg className="inline-block mr-1" width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="3" rx="1" fill="currentColor"/><rect x="3" y="8.5" width="14" height="3" rx="1" fill="currentColor"/><rect x="3" y="14" width="14" height="3" rx="1" fill="currentColor"/></svg>
   ) },
-  { key: 'board', label: 'Board', icon: (
+  { key: 'board', label: '看板视图', icon: (
     <svg className="inline-block mr-1" width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="4" height="14" rx="1" fill="currentColor"/><rect x="9" y="3" width="4" height="14" rx="1" fill="currentColor"/><rect x="15" y="3" width="2" height="14" rx="1" fill="currentColor"/></svg>
   ) },
 ];
@@ -74,7 +74,7 @@ export default function FutureSignalsPage() {
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
       {/* 顶部进度条 */}
-      <div className="flex-none w-full flex justify-center py-8 relative">
+      <div className="flex-none w-full flex justify-center py-6 relative bg-white shadow-sm">
         {/* 返回按钮 */}
         <Link 
           href="/" 
@@ -85,24 +85,24 @@ export default function FutureSignalsPage() {
           </svg>
           <span>返回首页</span>
         </Link>
-        <div className="flex items-center bg-[#C9D6F7]/20 rounded-full px-8 py-2 gap-6">
+        <div className="flex items-center bg-[#F3F4FD] rounded-full px-8 py-2 gap-6">
           {steps.map((step) => (
             <Link
               key={step.id}
               href={step.path}
-              className={`flex items-center gap-2 group transition-colors ${
+              className={`flex items-center gap-2 group transition-all duration-300 ${
                 step.current ? 'cursor-default' : 'hover:text-[#5157E8]'
               }`}
             >
               <div 
                 className={`w-8 h-8 flex items-center justify-center rounded-full text-white text-base
-                  ${step.current ? 'bg-[#5157E8]' : 'bg-[#B3B8D8] group-hover:bg-[#5157E8]'} transition-colors`}
+                  ${step.current ? 'bg-[#5157E8] shadow-lg' : 'bg-[#B3B8D8] group-hover:bg-[#5157E8] group-hover:shadow-md'} transition-all duration-300`}
               >
                 {step.id}
               </div>
               <span className={`${
-                step.current ? 'text-[#23272E]' : 'text-[#6B7280] group-hover:text-[#5157E8]'
-              } transition-colors`}>
+                step.current ? 'text-[#23272E] font-medium' : 'text-[#6B7280] group-hover:text-[#5157E8]'
+              } transition-colors duration-300`}>
                 {step.label}
               </span>
             </Link>
@@ -110,27 +110,24 @@ export default function FutureSignalsPage() {
         </div>
       </div>
       {/* 主体两栏布局 */}
-      <div className="flex-1 flex px-2 gap-4 w-full min-h-0">
+      <div className="flex-1 flex px-4 gap-6 w-full min-h-0 py-4">
         {/* 左侧视图区 */}
-        <div className="w-1/2 bg-white rounded-xl shadow flex flex-col min-h-0">
+        <div className="w-1/2 bg-white rounded-xl shadow-lg flex flex-col min-h-0">
           {/* 标题和视图切换 */}
           <div className="flex-none p-4">
-            <div className="mb-2 flex items-center">
-              <span className="text-lg font-bold text-[#5157E8] mr-4">Future Signals Library</span>
-              <div className="flex gap-2 items-center">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-xl font-bold text-[#5157E8]">未来信号库</span>
+              <div className="flex gap-2 items-center bg-gray-100 rounded-lg p-1">
                 {VIEW_TYPES.map(v => (
                   <button
                     key={v.key}
-                    className={`flex items-center px-2 py-1 text-sm border-none bg-transparent focus:outline-none transition-all relative
-                      ${viewType === v.key ? 'text-[#232323]' : 'text-gray-400'}
+                    className={`flex items-center px-3 py-1.5 text-sm rounded-md focus:outline-none transition-all duration-300
+                      ${viewType === v.key ? 'text-[#5157E8] bg-white shadow-sm' : 'text-gray-600 hover:text-[#5157E8]'}
                     `}
                     onClick={() => setViewType(v.key)}
                   >
                     {v.icon}
                     {v.label}
-                    {viewType === v.key && (
-                      <span className="absolute left-0 right-0 -bottom-1 h-1 w-full border-b-2 border-[#232323] rounded" />
-                    )}
                   </button>
                 ))}
               </div>
@@ -144,26 +141,28 @@ export default function FutureSignalsPage() {
                 {futureSignals.map((item, idx) => (
                   <div
                     key={item.id}
-                    className={`cursor-pointer border rounded-lg bg-white p-0 flex flex-col transition-all overflow-hidden shadow-sm ${selectedId === item.id ? 'border-[#5157E8] ring-2 ring-[#5157E8]' : 'border-gray-200'}`}
+                    className={`cursor-pointer border rounded-lg bg-white p-0 flex flex-col transition-all duration-300 overflow-hidden shadow-sm hover:shadow-md ${
+                      selectedId === item.id ? 'border-[#5157E8] ring-2 ring-[#5157E8]' : 'border-gray-200 hover:border-[#5157E8]/50'
+                    }`}
                     onClick={() => setSelectedId(item.id)}
                   >
                     {/* 顶部色块 */}
-                    <div className="flex items-center justify-between px-3 py-2 bg-[#5157E8]">
-                      <div className="text-xs text-white">{item.sign}</div>
+                    <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#5157E8] to-[#3a3fa0]">
+                      <div className="text-sm text-white font-medium">{item.sign}</div>
                       <div className="text-white text-lg leading-none flex items-center">
                         <span className="ml-2">&gt;</span>
                       </div>
                     </div>
                     {/* 标题 */}
-                    <div className="px-3 pt-2 pb-1">
-                      <div className="text-base text-[#5157E8] line-clamp-2">{item.title}</div>
+                    <div className="px-4 pt-3 pb-2">
+                      <div className="text-lg font-medium text-[#5157E8] line-clamp-2">{item.title}</div>
                     </div>
                     {/* 缩略图 */}
-                    <div className="flex justify-center items-center px-3 py-2">
+                    <div className="flex justify-center items-center px-4 py-3">
                       <img 
                         src={item.thumbnail} 
                         alt={item.title} 
-                        className="w-full h-16 object-cover rounded bg-gray-100"
+                        className="w-full h-32 object-cover rounded-lg bg-gray-100 shadow-sm"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.src = '/images/future-signals/placeholder.jpg';
@@ -171,8 +170,8 @@ export default function FutureSignalsPage() {
                       />
                     </div>
                     {/* 简介 */}
-                    <div className="px-3 pb-3">
-                      <div className="text-gray-700 text-sm leading-snug text-left line-clamp-2">
+                    <div className="px-4 pb-4">
+                      <div className="text-gray-700 text-sm leading-relaxed text-left line-clamp-3">
                         {item.summary}
                       </div>
                     </div>
@@ -181,25 +180,31 @@ export default function FutureSignalsPage() {
               </div>
             )}
             {viewType === 'table' && (
-              <div className="overflow-auto">
-                <table className="w-full text-sm border rounded">
+              <div className="overflow-auto rounded-lg border border-gray-200">
+                <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-[#F3F4FD]">
                     <tr className="text-[#5157E8]">
-                      <th className="p-2 text-left">Sign</th>
-                      <th className="p-2 text-left">Title</th>
-                      <th className="p-2 text-left">Summary</th>
+                      <th className="p-3 text-left font-medium">信号</th>
+                      <th className="p-3 text-left font-medium">标题</th>
+                      <th className="p-3 text-left font-medium">摘要</th>
                     </tr>
                   </thead>
                   <tbody>
                     {futureSignals.map(item => (
                       <tr
                         key={item.id}
-                        className={`cursor-pointer hover:bg-gray-50 ${selectedId === item.id ? 'bg-[#F3F4FD]' : ''}`}
+                        className={`cursor-pointer transition-colors duration-200 ${
+                          selectedId === item.id ? 'bg-[#F3F4FD]' : 'hover:bg-gray-50'
+                        }`}
                         onClick={() => setSelectedId(item.id)}
                       >
-                        <td className="p-2 border-b">{item.sign}</td>
-                        <td className="p-2 border-b text-[#5157E8]">{item.title}</td>
-                        <td className="p-2 border-b text-gray-600">{item.summary}</td>
+                        <td className="p-3 border-b border-gray-100">
+                          <span className="inline-block px-2 py-1 bg-[#5157E8] text-white text-xs rounded">
+                            {item.sign}
+                          </span>
+                        </td>
+                        <td className="p-3 border-b border-gray-100 text-[#5157E8] font-medium">{item.title}</td>
+                        <td className="p-3 border-b border-gray-100 text-gray-600">{item.summary}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -207,18 +212,22 @@ export default function FutureSignalsPage() {
               </div>
             )}
             {viewType === 'board' && (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-3">
                 {futureSignals.map(item => (
                   <div
                     key={item.id}
-                    className={`cursor-pointer border-l-4 p-3 bg-[#F9FAFB] hover:bg-gray-50 ${selectedId === item.id ? 'border-[#5157E8] bg-[#F3F4FD]' : 'border-gray-200'}`}
+                    className={`cursor-pointer border-l-4 p-4 bg-white rounded-lg shadow-sm transition-all duration-300 ${
+                      selectedId === item.id 
+                        ? 'border-[#5157E8] bg-[#F3F4FD] shadow-md' 
+                        : 'border-gray-200 hover:border-[#5157E8]/50 hover:shadow-md'
+                    }`}
                     onClick={() => setSelectedId(item.id)}
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500">{item.sign}</span>
-                      <div className="text-[#5157E8]">{item.title}</div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-white bg-[#5157E8] rounded-full px-3 py-1">{item.sign}</span>
+                      <div className="text-[#5157E8] font-medium">{item.title}</div>
                     </div>
-                    <div className="text-xs text-gray-500 mt-1 line-clamp-2">{item.summary}</div>
+                    <div className="text-sm text-gray-600 mt-2 line-clamp-2">{item.summary}</div>
                   </div>
                 ))}
               </div>
@@ -226,25 +235,29 @@ export default function FutureSignalsPage() {
           </div>
         </div>
         {/* 右侧详情区 */}
-        <div className="w-1/2 bg-white rounded-xl shadow flex flex-col min-h-0">
+        <div className="w-1/2 bg-white rounded-xl shadow-lg flex flex-col min-h-0">
           <div className="flex-1 overflow-auto p-6">
             {selected ? (
               <>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-sm text-white bg-[#5157E8] rounded px-2 py-1">{selected.sign}</span>
-                  <span className="text-xl text-[#5157E8]">{selected.title}</span>
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-sm text-white bg-gradient-to-r from-[#5157E8] to-[#3a3fa0] rounded-full px-3 py-1">
+                    {selected.sign}
+                  </span>
+                  <span className="text-2xl font-bold text-[#5157E8]">{selected.title}</span>
                 </div>
-                <div className="text-gray-700 mb-2">{selected.summary}</div>
+                <div className="text-gray-700 text-base leading-relaxed mb-4">{selected.summary}</div>
                 {selected.intro && (
-                  <div className="mb-1 text-gray-600 text-base">{selected.intro}</div>
+                  <div className="mb-3 text-gray-600 text-base leading-relaxed">{selected.intro}</div>
                 )}
                 {selected.introQuote && (
-                  <div className="mb-2 text-gray-400 italic border-l-4 border-[#5157E8] pl-3">{selected.introQuote}</div>
+                  <div className="mb-4 text-gray-500 italic border-l-4 border-[#5157E8] pl-4 py-2 bg-gray-50 rounded-r-lg">
+                    {selected.introQuote}
+                  </div>
                 )}
                 <img 
                   src={selected.thumbnail} 
                   alt={selected.title} 
-                  className="w-40 h-28 object-cover rounded mb-4 mx-auto"
+                  className="w-full h-48 object-cover rounded-lg mb-6 shadow-md"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.src = '/images/placeholder.jpg';
