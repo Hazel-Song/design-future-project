@@ -84,6 +84,19 @@ export default function LocalChallengesPage() {
       setSelectedId(parsed.id);
       setSelectedChallenge(parsed);
     }
+
+    // 添加页面卸载事件监听器
+    const handleUnload = () => {
+      localStorage.removeItem('selectedFutureSignal');
+      localStorage.removeItem('selectedLocalChallenge');
+      localStorage.removeItem('interpretationData');
+    };
+
+    window.addEventListener('beforeunload', handleUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleUnload);
+    };
   }, []);
 
   // 当选中的挑战ID改变时，更新selectedChallenge

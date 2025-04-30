@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import ReactMarkdown from 'react-markdown';
 
 const steps = [
   { id: 1, label: 'Future Signal', path: '/future-signals', completed: true },
@@ -145,10 +146,19 @@ export default function InterpretationPage() {
     
     setIsPrototypingLoading(true);
     try {
-      // 使用示例数据生成
-      const generatedCard = generatePrototypingCard();
-      setPrototypingCard(generatedCard);
-      setCanGenerateInterpretation(true);
+      console.log('Sending request with data:', selectedData);
+      
+      const response = await axios.post('/api/generate-prototyping', {
+        futureSignal: selectedData.futureSignal,
+        localChallenge: selectedData.localChallenge
+      });
+
+      if (response.data && response.data.prototypingCard) {
+        setPrototypingCard(response.data.prototypingCard);
+        setCanGenerateInterpretation(true);
+      } else {
+        throw new Error('Invalid response data');
+      }
     } catch (error) {
       console.error('生成原型时出错:', error);
       alert('生成原型时出现错误，请重试');
@@ -158,15 +168,24 @@ export default function InterpretationPage() {
   };
 
   const handleGenerateInterpretation = async () => {
-    if (!prototypingCard) {
-      alert('请先生成 Prototyping Card');
+    if (!prototypingCard || !selectedData.futureSignal || !selectedData.localChallenge) {
+      alert('请确保已选择所有必要的内容');
       return;
     }
+    
     setIsInterpretationLoading(true);
     try {
-      // 使用示例数据生成
-      const generatedInterpretation = generateInterpretation();
-      setInterpretation(generatedInterpretation);
+      const response = await axios.post('/api/interpretation', {
+        futureSignal: selectedData.futureSignal,
+        prototypingCard: prototypingCard,
+        localChallenge: selectedData.localChallenge
+      });
+
+      if (response.data && response.data.interpretation) {
+        setInterpretation(response.data.interpretation);
+      } else {
+        throw new Error('Invalid response data');
+      }
     } catch (error) {
       console.error('生成解释时出错:', error);
       alert('生成解释时出现错误，请重试');
@@ -184,19 +203,16 @@ export default function InterpretationPage() {
     setIsChatLoading(true);
     
     try {
-      const response = await axios.post<ChatResponse>('/api/chat', {
-        message: chatInput,
-        futureSignal: selectedData.futureSignal,
-        localChallenge: selectedData.localChallenge,
-        prototypingCard,
-        interpretation
+      const response = await axios.post('/api/magic_if', {
+        interpretation: interpretation,
+        templatePrompt: chatInput
       });
       
       if (response.data && response.data.reply) {
         const aiResponse = { role: 'assistant' as const, content: response.data.reply };
         setChatHistory(prev => [...prev, aiResponse]);
       } else {
-        throw new Error('无效的响应数据');
+        throw new Error('Invalid response data');
       }
     } catch (error) {
       console.error('发送消息时出错:', error);
@@ -208,6 +224,7 @@ export default function InterpretationPage() {
 
   const usePromptTemplate = (prompt: string) => {
     setChatInput(prompt);
+    handleSendMessage();  // 自动发送模板消息
   };
 
   const handleNextStep = () => {
@@ -433,7 +450,42 @@ export default function InterpretationPage() {
                           : 'bg-gray-100 text-gray-700'
                       }`}
                     >
-                      {message.content}
+                      {message.role === 'assistant' ? (
+                        <ReactMarkdown
+                          components={{
+                            // @ts-ignore
+                            h1: ({children}) => <h1 className="text-xl font-bold mb-4 text-[#5157E8]">{children}</h1>,
+                            // @ts-ignore
+                            h2: ({children}) => <h2 className="text-lg font-bold mb-3 text-gray-800">{children}</h2>,
+                            // @ts-ignore
+                            h3: ({children}) => <h3 className="text-base font-bold mb-2 text-gray-700">{children}</h3>,
+                            // @ts-ignore
+                            p: ({children}) => <p className="text-gray-600 mb-4 leading-relaxed">{children}</p>,
+                            // @ts-ignore
+                            ul: ({children}) => <ul className="list-disc pl-6 mb-4 space-y-2">{children}</ul>,
+                            // @ts-ignore
+                            ol: ({children}) => <ol className="list-decimal pl-6 mb-4 space-y-2">{children}</ol>,
+                            // @ts-ignore
+                            li: ({children}) => <li className="text-gray-600">{children}</li>,
+                            // @ts-ignore
+                            strong: ({children}) => <strong className="font-bold text-gray-900">{children}</strong>,
+                            // @ts-ignore
+                            em: ({children}) => <em className="italic text-gray-700">{children}</em>,
+                            // @ts-ignore
+                            blockquote: ({children}) => (
+                              <blockquote className="border-l-4 border-[#5157E8] pl-4 py-2 mb-4 bg-gray-50 text-gray-600 italic rounded-r">
+                                {children}
+                              </blockquote>
+                            ),
+                            // @ts-ignore
+                            code: ({children}) => <code className="bg-gray-100 px-1.5 py-0.5 rounded text-[#5157E8] text-sm">{children}</code>
+                          }}
+                        >
+                          {message.content}
+                        </ReactMarkdown>
+                      ) : (
+                        message.content
+                      )}
                     </div>
                   </div>
                 ))}

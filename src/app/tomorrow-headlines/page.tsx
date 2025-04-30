@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import axios from 'axios';
 
 const steps = [
   { id: 1, label: 'Future Signal', path: '/future-signals', completed: true },
@@ -28,6 +29,10 @@ export default function TomorrowHeadlinesPage() {
     localChallenge: null,
     interpretation: null
   });
+  const [selectedYear, setSelectedYear] = useState('2025');
+  const [selectedStyle, setSelectedStyle] = useState('positive');
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     try {
@@ -44,7 +49,47 @@ export default function TomorrowHeadlinesPage() {
     } catch (error) {
       console.error('Error loading saved data:', error);
     }
+
+    // 添加页面卸载事件监听器
+    const handleUnload = () => {
+      localStorage.removeItem('selectedFutureSignal');
+      localStorage.removeItem('selectedLocalChallenge');
+      localStorage.removeItem('interpretationData');
+    };
+
+    window.addEventListener('beforeunload', handleUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleUnload);
+    };
   }, []);
+
+  const handleGenerateHeadline = async () => {
+    if (!savedData.interpretation?.content) {
+      alert('请先生成解释内容');
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const response = await axios.post('/api/image', {
+        interpretation: savedData.interpretation.content,
+        year: selectedYear,
+        style: selectedStyle
+      });
+
+      if (response.data && response.data.imageUrl) {
+        setGeneratedImage(response.data.imageUrl);
+      } else {
+        throw new Error('Invalid response data');
+      }
+    } catch (error) {
+      console.error('生成头条图片时出错:', error);
+      alert('生成头条图片时出现错误，请重试');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
@@ -128,7 +173,11 @@ export default function TomorrowHeadlinesPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       时间跨度
                     </label>
-                    <select className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5157E8] focus:border-transparent">
+                    <select 
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5157E8] focus:border-transparent"
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(e.target.value)}
+                    >
                       <option value="2025">2025年</option>
                       <option value="2030">2030年</option>
                       <option value="2035">2035年</option>
@@ -140,17 +189,22 @@ export default function TomorrowHeadlinesPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       头条风格
                     </label>
-                    <select className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5157E8] focus:border-transparent">
+                    <select 
+                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5157E8] focus:border-transparent"
+                      value={selectedStyle}
+                      onChange={(e) => setSelectedStyle(e.target.value)}
+                    >
                       <option value="positive">积极正面</option>
                       <option value="neutral">中立客观</option>
                       <option value="negative">批评反思</option>
                     </select>
                   </div>
                   <button
-                    className="w-full bg-[#5157E8] text-white py-2 rounded-lg hover:bg-[#3a3fa0] transition-all"
-                    onClick={() => alert('生成头条')}
+                    className="w-full bg-[#5157E8] text-white py-2 rounded-lg hover:bg-[#3a3fa0] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={handleGenerateHeadline}
+                    disabled={isGenerating}
                   >
-                    生成头条
+                    {isGenerating ? '生成中...' : '生成头条'}
                   </button>
                 </div>
               </div>
@@ -167,12 +221,23 @@ export default function TomorrowHeadlinesPage() {
 
           {/* 头条内容 */}
           <div className="flex-1 overflow-auto p-4">
-            <div className="space-y-4">
-              {/* 这里将显示生成的头条列表 */}
+            {isGenerating ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-gray-500">正在生成头条图片...</div>
+              </div>
+            ) : generatedImage ? (
+              <div className="space-y-4">
+                <img 
+                  src={generatedImage} 
+                  alt="Generated Headline" 
+                  className="w-full rounded-lg shadow-lg"
+                />
+              </div>
+            ) : (
               <div className="bg-gray-100 p-4 rounded-lg">
                 <p className="text-gray-500 text-center">点击左侧"生成头条"按钮开始生成</p>
               </div>
-            </div>
+            )}
           </div>
 
           {/* 底部确认按钮 */}

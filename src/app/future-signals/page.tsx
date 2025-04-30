@@ -53,6 +53,21 @@ export default function FutureSignalsPage() {
     loadData();
   }, []);
 
+  useEffect(() => {
+    // 添加页面卸载事件监听器
+    const handleUnload = () => {
+      localStorage.removeItem('selectedFutureSignal');
+      localStorage.removeItem('selectedLocalChallenge');
+      localStorage.removeItem('interpretationData');
+    };
+
+    window.addEventListener('beforeunload', handleUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleUnload);
+    };
+  }, []);
+
   const selected = futureSignals.find(item => item.id === selectedId);
 
   if (loading) {
@@ -165,7 +180,7 @@ export default function FutureSignalsPage() {
                         className="w-full h-32 object-cover rounded-lg bg-gray-100 shadow-sm"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
-                          target.src = '/images/future-signals/placeholder.jpg';
+                          target.src = '/images/future-signals/sense-of-safety.jpg';
                         }}
                       />
                     </div>
@@ -260,7 +275,7 @@ export default function FutureSignalsPage() {
                   className="w-full h-48 object-cover rounded-lg mb-6 shadow-md"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    target.src = '/images/placeholder.jpg';
+                    target.src = '/images/future-signals/sense-of-safety.jpg';
                   }}
                 />
                 <div className="text-gray-500 text-sm whitespace-pre-line">{selected.detail}</div>
