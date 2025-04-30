@@ -166,7 +166,7 @@ export default function FutureSignalsPage() {
                         className="w-full h-16 object-cover rounded bg-gray-100"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
-                          target.src = '/images/placeholder.jpg';
+                          target.src = '/images/future-signals/placeholder.jpg';
                         }}
                       />
                     </div>

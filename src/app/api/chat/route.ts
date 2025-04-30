@@ -1,6 +1,6 @@
-import { OpenAI } from 'openai';
+import OpenAI from 'openai';
 import { NextResponse } from 'next/server';
-import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
+import type { ChatCompletionMessageParam } from 'openai/resources';
 
 // 创建OpenAI客户端实例
 const openai = new OpenAI({
@@ -58,13 +58,13 @@ export async function POST(request: Request) {
       {
         role: "system",
         content: `你是一个专业的AI助手，专门帮助用户探索日本会津地区的地方挑战。
-当前正在讨论的命题是：${selectedChallenge ? JSON.stringify(selectedChallenge) : '未选择命题'}
+        当前正在讨论的命题是：${selectedChallenge ? JSON.stringify(selectedChallenge) : '未选择命题'}
 
-请根据这个命题，为用户提供专业、有见地的回答。回答时：
-1. 考虑会津地区的特点和背景
-2. 提供具体的建议和见解
-3. 鼓励用户深入思考
-4. 保持友好和专业的对话风格`
+        请根据这个命题，为用户提供专业、有见地的回答。回答时：
+        1. 考虑会津地区的特点和背景
+        2. 提供具体的建议和见解
+        3. 鼓励用户深入思考
+        4. 保持友好和专业的对话风格`
       },
       {
         role: "user",
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
     
     try {
       console.log('开始调用OpenAI API，配置:', {
-        model: "gpt-3.5-turbo",
+        model: "gpt-4o",
         temperature: 0.7,
         max_tokens: 1000,
         messages: messages
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
         try {
           const completion = await openai.chat.completions.create({
             messages,
-            model: "gpt-3.5-turbo",
+            model: "gpt-4o",
             temperature: 0.7,
             max_tokens: 1000
           });

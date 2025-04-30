@@ -114,13 +114,22 @@ export default function InterpretationPage() {
       alert('请先选择 Future Signal 和 Local Challenge');
       return;
     }
+    
     setIsPrototypingLoading(true);
     try {
-      const response = await axios.post<PrototypingResponse>('/api/generate-prototyping', {
+      // 添加日志来调试
+      console.log('Sending request with data:', {
+        futureSignal: selectedData.futureSignal,
+        localChallenge: selectedData.localChallenge
+      });
+
+      const response = await axios.post('/api/generate-prototyping', {
         futureSignal: selectedData.futureSignal,
         localChallenge: selectedData.localChallenge
       });
       
+      console.log('Received response:', response.data);
+
       if (response.data && response.data.prototypingCard) {
         setPrototypingCard(response.data.prototypingCard);
         setCanGenerateInterpretation(true);
@@ -129,7 +138,12 @@ export default function InterpretationPage() {
       }
     } catch (error) {
       console.error('生成原型时出错:', error);
-      alert('生成原型时出现错误，请重试');
+      // 显示更详细的错误信息
+      if (axios.isAxiosError(error)) {
+        alert(`生成原型时出现错误: ${error.response?.data?.error || error.message}`);
+      } else {
+        alert('生成原型时出现错误，请重试');
+      }
     } finally {
       setIsPrototypingLoading(false);
     }

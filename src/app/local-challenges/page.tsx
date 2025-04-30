@@ -153,14 +153,14 @@ export default function LocalChallengesPage() {
           message: chatInput,
           systemPrompt: `作为一个了解会津地区的专家，你正在帮助用户探索以下地方挑战：
 
-主题：${selectedChallenge.title}
-描述：${selectedChallenge.description}
+          主题：${selectedChallenge.title}
+          描述：${selectedChallenge.description}
 
-请根据用户的问题，结合这个地方挑战的特点，提供专业、有见地的回答。回答要求：
-1. 紧扣主题
-2. 具有启发性
-3. 言简意赅
-4. 长度控制在100字以内`
+          请根据用户的问题，结合这个地方挑战的特点，提供专业、有见地的回答。回答要求：
+          1. 紧扣主题
+          2. 具有启发性
+          3. 言简意赅
+          4. 长度控制在100字以内`
         })
       });
 
