@@ -189,27 +189,12 @@ export default function LocalChallengesPage() {
       if (data.reply) {
         const aiResponse = { role: 'assistant' as const, content: data.reply };
         setChatHistory(prev => [...prev, aiResponse]);
-
-        // 使用API返回的标题和内容创建新的挑战
-        const newChallenge: Challenge = {
-          id: Math.max(...challenges.map(c => c.id)) + 1,
-          title: data.title || 'New Challenge',
-          description: data.reply,
-          isUserCreated: true,
-          isAIGenerated: true
-        };
-
-        // 添加新挑战到列表
-        setChallenges(prev => [newChallenge, ...prev]);
-
-        // 自动选择新创建的挑战
-        setSelectedId(newChallenge.id);
       } else {
         throw new Error('The server returned data format is incorrect');
       }
     } catch (error) {
-      console.error('Error generating challenge:', error);
-      alert('An error occurred while generating the challenge. Please try again.');
+      console.error('Error in chat:', error);
+      alert('An error occurred while chatting. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -452,24 +437,4 @@ export default function LocalChallengesPage() {
                 disabled={isLoading}
                 className={`px-6 py-3 rounded-full bg-[#5157E8] text-white transition-all ${
                   isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#3a3fa0]'
-                }`}
-              >
-                Send
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 底部按钮 */}
-      <div className="flex-none px-4 py-4 flex justify-end">
-        <button
-          onClick={handleNextStep}
-          className="bg-[#5157E8] text-white px-8 py-3 rounded-full shadow-lg text-lg hover:bg-[#3a3fa0] transition-all"
-        >
-          Next Step
-        </button>
-      </div>
-    </div>
-  );
-} 
+                }`
