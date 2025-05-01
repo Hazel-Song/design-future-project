@@ -385,13 +385,11 @@ export default function LocalChallengesPage() {
                 className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div className={`flex items-start gap-3 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                  {/* 头像 */}
                   <div className={`w-10 h-10 rounded-full flex-none ${
                     message.role === 'user' ? 'bg-[#5157E8]' : 'bg-[#10B981]'
                   } flex items-center justify-center text-white`}>
                     {message.role === 'user' ? 'Me' : 'AI'}
                   </div>
-                  {/* 消息气泡 */}
                   <div className={`py-2 px-4 rounded-2xl ${
                     message.role === 'user' 
                       ? 'bg-[#5157E8] text-white rounded-tr-none' 
@@ -437,4 +435,24 @@ export default function LocalChallengesPage() {
                 disabled={isLoading}
                 className={`px-6 py-3 rounded-full bg-[#5157E8] text-white transition-all ${
                   isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#3a3fa0]'
-                }`
+                }`}
+              >
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 底部按钮 */}
+      <div className="flex-none px-4 py-4 flex justify-end">
+        <button
+          onClick={handleNextStep}
+          className="bg-[#5157E8] text-white px-8 py-3 rounded-full shadow-lg text-lg hover:bg-[#3a3fa0] transition-all"
+        >
+          Next Step
+        </button>
+      </div>
+    </div>
+  );
+}
