@@ -208,23 +208,8 @@ export default function LocalChallengesPage() {
         throw new Error('The server returned data format is incorrect');
       }
     } catch (error) {
-      console.error('Error sending message:', error);
-      let errorMessage = 'Sorry, an error occurred. Please try again later.';
-      
-      if (error instanceof Error) {
-        if (error.message.includes('API authentication failed')) {
-          errorMessage = 'System configuration error. Please contact the administrator.';
-        } else if (error.message.includes('Quota exceeded')) {
-          errorMessage = 'API usage limit has been reached. Please try again later.';
-        } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-          errorMessage = 'Network connection error. Please check your network connection and try again.';
-        } else {
-          errorMessage = error.message;
-        }
-      }
-      
-      const errorResponse = { role: 'assistant' as const, content: errorMessage };
-      setChatHistory(prev => [...prev, errorResponse]);
+      console.error('Error generating challenge:', error);
+      alert('An error occurred while generating the challenge. Please try again.');
     } finally {
       setIsLoading(false);
     }

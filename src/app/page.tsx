@@ -7,13 +7,7 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // 检查用户是否已登录
-    const currentUserId = localStorage.getItem('currentUserId');
-    if (currentUserId) {
-      router.push('/workshop');
-    } else {
-      router.push('/log_in');
-    }
+    router.push('/workshop');
   }, [router]);
 
   return (
