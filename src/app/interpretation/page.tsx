@@ -249,7 +249,7 @@ export default function InterpretationPage() {
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
       {/* 顶部进度条 */}
-      <div className="flex-none w-full flex justify-center py-8 relative">
+      <div className="flex-none w-full flex justify-center py-6 relative bg-white shadow-sm">
         {/* 返回按钮 */}
         <Link 
           href="/local-challenges" 
@@ -258,7 +258,7 @@ export default function InterpretationPage() {
           <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          <span>Back to the previous step</span>
+          <span>Back to previous page</span>
         </Link>
         <div className="flex items-center bg-[#C9D6F7]/20 rounded-full px-8 py-2 gap-6">
           {steps.map((step) => (
@@ -294,11 +294,11 @@ export default function InterpretationPage() {
       </div>
 
       {/* 主体两栏布局 */}
-      <div className="flex-1 flex px-2 gap-4 w-full min-h-0">
+      <div className="flex-1 flex px-6 gap-6 w-full min-h-0 py-6">
         {/* 左侧区域 */}
-        <div className="w-1/2 bg-white rounded-xl shadow flex flex-col min-h-0">
+        <div className="w-1/2 bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col min-h-0">
           {/* 标题 */}
-          <div className="flex-none p-4">
+          <div className="flex-none p-6">
             <div className="mb-2">
               <span className="text-lg font-bold text-[#5157E8]">Future Interpretation Canvas</span>
             </div>
@@ -306,10 +306,10 @@ export default function InterpretationPage() {
           </div>
 
           {/* 内容区域 */}
-          <div className="flex-1 overflow-auto p-4">
-            <div className="space-y-4">
+          <div className="flex-1 overflow-auto p-6">
+            <div className="space-y-6">
               {/* Future Signal 区域 */}
-              <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="bg-gray-50 p-6 rounded-xl">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <div className="flex items-center justify-center px-2 py-1 bg-[#5157E8] text-white text-xs rounded">
@@ -334,7 +334,7 @@ export default function InterpretationPage() {
               </div>
 
               {/* Prototyping Card 区域 */}
-              <div className="bg-white border-2 border-[#5157E8] p-4 rounded-lg">
+              <div className="bg-white border-2 border-[#5157E8] p-6 rounded-xl">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <div className="flex items-center justify-center px-2 py-1 bg-[#5157E8] text-white text-xs rounded">
@@ -350,7 +350,7 @@ export default function InterpretationPage() {
                     Re-generate
                   </button>
                 </div>
-                <div className="min-h-[80px] bg-gray-50 rounded p-3">
+                <div className="min-h-[80px] bg-gray-50 rounded-lg p-4">
                   {isPrototypingLoading ? (
                     <div className="flex items-center justify-center h-full text-gray-500">
                       Generating...
@@ -366,7 +366,7 @@ export default function InterpretationPage() {
               </div>
 
               {/* Local Challenge 区域 */}
-              <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="bg-gray-50 p-6 rounded-xl">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <div className="flex items-center justify-center px-2 py-1 bg-[#5157E8] text-white text-xs rounded">
@@ -394,7 +394,7 @@ export default function InterpretationPage() {
               </div>
 
               {/* Interpretation 生成区域 */}
-              <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="bg-gray-50 p-6 rounded-xl">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-lg font-medium">Interpretation</h3>
                   <button
@@ -405,7 +405,7 @@ export default function InterpretationPage() {
                     Generate Interpretation
                   </button>
                 </div>
-                <div className="min-h-[120px] bg-white rounded p-3 border border-gray-200">
+                <div className="min-h-[120px] bg-white rounded-lg p-4 border border-gray-200">
                   {isInterpretationLoading ? (
                     <div className="flex items-center justify-center h-full text-gray-500">
                       Generating...
@@ -425,13 +425,13 @@ export default function InterpretationPage() {
         </div>
 
         {/* 右侧对话区 */}
-        <div className="w-1/2 bg-white rounded-xl shadow flex flex-col min-h-0">
-          <div className="flex-none p-4 border-b border-gray-200">
+        <div className="w-1/2 bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col min-h-0">
+          <div className="flex-none p-6 border-b border-gray-200">
             <h3 className="text-lg font-bold text-[#5157E8]">AI Assistant</h3>
           </div>
 
           {/* 对话历史 */}
-          <div className="flex-1 overflow-auto p-4 space-y-4">
+          <div className="flex-1 overflow-auto p-6 space-y-4">
             {!interpretation ? (
               <div className="flex items-center justify-center h-full text-gray-500">
                 Please generate Interpretation first
@@ -501,7 +501,7 @@ export default function InterpretationPage() {
           </div>
 
           {/* 底部输入区域 */}
-          <div className="flex-none p-4 pb-20 space-y-4 border-t border-gray-200">
+          <div className="flex-none p-6 pb-20 space-y-4 border-t border-gray-200">
             {interpretation && (
               <>
                 {/* 提示词模板 */}

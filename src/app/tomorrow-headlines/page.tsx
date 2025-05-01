@@ -94,7 +94,7 @@ export default function TomorrowHeadlinesPage() {
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
       {/* 顶部进度条 */}
-      <div className="flex-none w-full flex justify-center py-8 relative">
+      <div className="flex-none w-full flex justify-center py-6 relative bg-white shadow-sm">
         {/* 返回按钮 */}
         <Link 
           href="/interpretation" 
@@ -103,7 +103,7 @@ export default function TomorrowHeadlinesPage() {
           <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          <span>Back to the previous step</span>
+          <span>Back to previous page</span>
         </Link>
         <div className="flex items-center bg-[#C9D6F7]/20 rounded-full px-8 py-2 gap-6">
           {steps.map((step) => (
@@ -139,11 +139,11 @@ export default function TomorrowHeadlinesPage() {
       </div>
 
       {/* 主体两栏布局 */}
-      <div className="flex-1 flex px-2 gap-4 w-full min-h-0">
+      <div className="flex-1 flex px-6 gap-6 w-full min-h-0 py-6">
         {/* 左侧区域 */}
-        <div className="w-1/2 bg-white rounded-xl shadow flex flex-col min-h-0">
+        <div className="w-1/2 bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col min-h-0">
           {/* 标题 */}
-          <div className="flex-none p-4">
+          <div className="flex-none p-6">
             <div className="mb-2">
               <span className="text-lg font-bold text-[#5157E8]">Tomorrow Headline Generation</span>
             </div>
@@ -151,9 +151,9 @@ export default function TomorrowHeadlinesPage() {
           </div>
 
           {/* 内容区域 */}
-          <div className="flex-1 overflow-auto p-4">
-            <div className="space-y-4">
-              <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="flex-1 overflow-auto p-6">
+            <div className="space-y-6">
+              <div className="bg-gray-50 p-6 rounded-xl">
                 <h3 className="text-lg font-medium mb-4">Selected Elements</h3>
                 <div className="space-y-4">
                   {/* 显示解释内容 */}
@@ -166,8 +166,8 @@ export default function TomorrowHeadlinesPage() {
                 </div>
               </div>
 
-              <div className="bg-white border-2 border-[#5157E8] p-4 rounded-lg">
-                <h3 className="text-lg font-medium mb-2">Generation Settings</h3>
+              <div className="bg-white border-2 border-[#5157E8] p-6 rounded-xl">
+                <h3 className="text-lg font-medium mb-4">Generation Settings</h3>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -213,14 +213,14 @@ export default function TomorrowHeadlinesPage() {
         </div>
 
         {/* 右侧区域 */}
-        <div className="w-1/2 bg-white rounded-xl shadow flex flex-col min-h-0">
+        <div className="w-1/2 bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col min-h-0">
           {/* 标题 */}
-          <div className="flex-none p-4 bg-gray-100 rounded-t-xl">
-            <div className="text-lg text-gray-700">Generated Headline</div>
+          <div className="flex-none p-6 border-b border-gray-200">
+            <div className="text-lg font-bold text-[#5157E8]">Generated Headline</div>
           </div>
 
           {/* 头条内容 */}
-          <div className="flex-1 overflow-auto p-4">
+          <div className="flex-1 overflow-auto p-6">
             {isGenerating ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-gray-500">Generating headline image...</div>
@@ -230,20 +230,20 @@ export default function TomorrowHeadlinesPage() {
                 <img 
                   src={generatedImage} 
                   alt="Generated Headline" 
-                  className="w-full rounded-lg shadow-lg"
+                  className="w-full rounded-xl shadow-lg"
                 />
               </div>
             ) : (
-              <div className="bg-gray-100 p-4 rounded-lg">
+              <div className="bg-gray-50 p-6 rounded-xl">
                 <p className="text-gray-500 text-center">Click the "Generate Headline" button on the left to start generating</p>
               </div>
             )}
           </div>
 
           {/* 底部确认按钮 */}
-          <div className="flex-none p-4 flex justify-end">
+          <div className="flex-none p-6 flex justify-end border-t border-gray-200">
             <button
-              className="bg-[#5157E8] text-white px-8 py-3 rounded-full shadow-lg text-lg hover:bg-[#3a3fa0] transition-all"
+              className="bg-[#5157E8] text-white px-8 py-3 rounded-xl shadow-md hover:shadow-lg hover:bg-[#3a3fa0] transition-all"
               onClick={() => alert('Complete Workshop')}
             >
               Complete Workshop

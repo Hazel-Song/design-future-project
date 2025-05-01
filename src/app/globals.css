@@ -2,6 +2,68 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --primary-color: #5157E8;
+  --secondary-color: #2563EB;
+  --background-light: #F8FAFC;
+  --text-primary: #1F2937;
+  --text-secondary: #4B5563;
+  --border-color: #E5E7EB;
+}
+
+body {
+  background-color: var(--background-light);
+  color: var(--text-primary);
+}
+
+/* 全局过渡动画 */
+* {
+  transition: all 0.2s ease-in-out;
+}
+
+/* 现代化卡片样式 */
+.modern-card {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid var(--border-color);
+}
+
+.modern-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* 按钮样式 */
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover {
+  filter: brightness(110%);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: white;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+  background-color: var(--background-light);
+}
+
 /* 添加 Markdown 样式覆盖 */
 .prose {
   max-width: none;
@@ -183,20 +245,34 @@
   background: #D1D5DB;
 }
 
-/* 响应式设计 */
+/* 响应式设计优化 */
 @media (max-width: 1024px) {
   .cards-container {
     grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .workshop-container {
+    padding: 0 1.5rem;
   }
 }
 
 @media (max-width: 640px) {
   .cards-container {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
   
   .workshop-container {
     padding: 0 1rem;
+  }
+  
+  .section-title-en {
+    font-size: 1.1rem;
+  }
+  
+  .section-title-zh {
+    font-size: 0.9rem;
   }
   
   .workshop-card {
@@ -204,4 +280,39 @@
     min-height: 400px;
     padding: 1.5rem;
   }
+}
+
+/* 加载动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background-light);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
 }
