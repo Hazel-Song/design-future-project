@@ -12,16 +12,6 @@ const nextConfig = {
     }
     return config;
   },
-  // 添加开发服务器配置
-  devServer: {
-    hot: false, // 禁用热重载
-    webSocketTransport: 'ws',
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'X-Requested-With, Content-Type',
-    }
-  },
   async headers() {
     return [
       {
