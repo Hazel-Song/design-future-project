@@ -94,16 +94,6 @@ const sections: WorkshopSection[] = [
 ];
 
 export default function WorkshopPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    // 检查用户是否已登录
-    const currentUserId = localStorage.getItem('currentUserId');
-    if (!currentUserId) {
-      router.push('/log_in');
-    }
-  }, [router]);
-
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="workshop-container">
