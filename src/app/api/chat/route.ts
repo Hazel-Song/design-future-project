@@ -114,16 +114,16 @@ export async function POST(request: Request) {
             const title = titleMatch ? titleMatch[1].trim() : 'New Challenge';
             const content = contentMatch ? contentMatch[1].trim() : responseText.trim();
 
-            return new NextResponse(
+          return new NextResponse(
               JSON.stringify({ 
                 reply: content,
                 title: title
               }),
-              { 
-                status: 200,
-                headers: { 'Content-Type': 'application/json' }
-              }
-            );
+            { 
+              status: 200,
+              headers: { 'Content-Type': 'application/json' }
+            }
+          );
           }
         } catch (error: any) {
           lastError = error;

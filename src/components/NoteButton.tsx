@@ -18,12 +18,11 @@ export default function NoteButton() {
   return (
     <>
       <button
-        className="flex items-center gap-2 w-auto h-10 rounded-full bg-white px-3 shadow hover:bg-gray-100"
+        className="w-14 h-14 rounded-full bg-[#5157E8] flex items-center justify-center shadow-lg hover:bg-[#373cb6] transition-colors"
         title="My Notes"
         onClick={() => setOpen(true)}
       >
-        <span role="img" aria-label="note">📝</span>
-        <span className="text-sm font-medium text-gray-700">My Notes</span>
+        <img src="/images/image_workshop/note.png" alt="My Notes" className="w-7 h-7" />
       </button>
       {open && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">

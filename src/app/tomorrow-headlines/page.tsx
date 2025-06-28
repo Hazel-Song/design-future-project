@@ -107,18 +107,17 @@ export default function TomorrowHeadlinesPage() {
         </Link>
         <div className="flex items-center bg-[#C9D6F7]/20 rounded-full px-8 py-2 gap-6">
           {steps.map((step) => (
-            <Link
+            <div
               key={step.id}
-              href={step.path}
               className={`flex items-center gap-2 group transition-colors ${
-                step.current ? 'cursor-default' : 'hover:text-[#5157E8]'
+                step.current ? 'cursor-default' : ''
               }`}
             >
-              <div 
+              <div
                 className={`w-8 h-8 flex items-center justify-center rounded-full text-white text-base
-                  ${step.completed ? 'bg-[#B3B8D8] group-hover:bg-[#5157E8]' : 
-                    step.current ? 'bg-[#5157E8]' : 
-                    'bg-[#B3B8D8] group-hover:bg-[#5157E8]'} transition-colors`}
+                  ${step.completed ? 'bg-gray-400' :
+                    step.current ? 'bg-[#5157E8]' : 'bg-gray-300'
+                  }`}
               >
                 {step.completed ? (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,12 +127,12 @@ export default function TomorrowHeadlinesPage() {
                   step.id
                 )}
               </div>
-              <span className={`${
-                step.current ? 'text-[#23272E]' : 'text-[#6B7280] group-hover:text-[#5157E8]'
-              } transition-colors`}>
+              <span className={`transition-colors ${
+                step.current ? 'text-[#23272E]' : 'text-gray-500'
+              }`}>
                 {step.label}
               </span>
-            </Link>
+            </div>
           ))}
         </div>
       </div>
@@ -241,10 +240,18 @@ export default function TomorrowHeadlinesPage() {
           </div>
 
           {/* 底部确认按钮 */}
-          <div className="flex-none p-6 flex justify-end border-t border-gray-200">
+          <div className="flex-none p-6 text-center">
             <button
-              className="bg-[#5157E8] text-white px-8 py-3 rounded-xl shadow-md hover:shadow-lg hover:bg-[#3a3fa0] transition-all"
-              onClick={() => alert('Complete Workshop')}
+              onClick={() => {
+                const progress = JSON.parse(localStorage.getItem('workshopProgress') || '[]');
+                if (!progress.includes('tomorrow_headline')) {
+                  progress.push('tomorrow_headline');
+                  localStorage.setItem('workshopProgress', JSON.stringify(progress));
+                }
+                // 这里可以跳转到 workshop 或一个总结页面
+                window.location.href = '/workshop'; 
+              }}
+              className="w-full bg-green-500 text-white px-8 py-3 rounded-full shadow-lg text-lg hover:bg-green-600 transition-all"
             >
               Complete Workshop
             </button>

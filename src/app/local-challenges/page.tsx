@@ -58,7 +58,7 @@ const promptTemplates = [
 export default function LocalChallengesPage() {
   const router = useRouter();
   const [challenges, setChallenges] = useState<Challenge[]>(initialChallenges);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [showInput, setShowInput] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
@@ -82,8 +82,11 @@ export default function LocalChallengesPage() {
     const savedLocalChallenge = localStorage.getItem('selectedLocalChallenge');
     if (savedLocalChallenge) {
       const parsed = JSON.parse(savedLocalChallenge);
-      setSelectedId(parsed.id);
-      setSelectedChallenge(parsed);
+      if (Array.isArray(parsed)) {
+        setSelectedIds(parsed.map((c: any) => c.id));
+      } else if (parsed.id) {
+        setSelectedIds([parsed.id]);
+      }
     }
 
     // 添加页面卸载事件监听器
@@ -100,17 +103,15 @@ export default function LocalChallengesPage() {
     };
   }, []);
 
-  // 当选中的挑战ID改变时，更新selectedChallenge
+  // 选中挑战变化时，更新右侧AI区内容（取第一个选中项）
   useEffect(() => {
-    if (selectedId) {
-      const challenge = challenges.find(c => c.id === selectedId);
-      if (challenge) {
-        setSelectedChallenge(challenge);
-      }
+    if (selectedIds.length > 0) {
+      const challenge = challenges.find(c => c.id === selectedIds[0]);
+      setSelectedChallenge(challenge || null);
     } else {
       setSelectedChallenge(null);
     }
-  }, [selectedId, challenges]);
+  }, [selectedIds, challenges]);
 
   const handleAddChallenge = () => {
     const errors: FormError = {};
@@ -205,19 +206,23 @@ export default function LocalChallengesPage() {
   };
 
   const handleNextStep = () => {
-    if (!selectedId) {
-      alert('Please choose a Local Challenge first');
+    if (selectedIds.length === 0) {
+      alert('Please choose at least one Local Challenge');
       return;
     }
-
-    const selectedChallenge = challenges.find(c => c.id === selectedId);
-    if (selectedChallenge) {
-      // 保存选择的 Local Challenge
-      localStorage.setItem('selectedLocalChallenge', JSON.stringify(selectedChallenge));
-      
-      // 跳转到下一页
-      router.push('/interpretation');
+    const selectedChallenges = challenges.filter(c => selectedIds.includes(c.id));
+    localStorage.setItem('selectedLocalChallenge', JSON.stringify(selectedChallenges));
+    const progress = JSON.parse(localStorage.getItem('workshopProgress') || '[]');
+    if (!progress.includes('issue')) {
+      progress.push('issue');
+      localStorage.setItem('workshopProgress', JSON.stringify(progress));
     }
+    router.push('/workshop');
+  };
+
+  // 多选切换
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
 
   return (
@@ -236,25 +241,24 @@ export default function LocalChallengesPage() {
         </Link>
         <div className="flex items-center bg-[#F3F4FD] rounded-full px-8 py-2 gap-6">
           {steps.map((step) => (
-            <Link
+            <div
               key={step.id}
-              href={step.path}
               className={`flex items-center gap-2 group transition-all duration-300 ${
-                step.current ? 'cursor-default' : 'hover:text-[#5157E8]'
+                step.current ? 'cursor-default' : ''
               }`}
             >
               <div 
                 className={`w-8 h-8 flex items-center justify-center rounded-full text-white text-base
-                  ${step.current ? 'bg-[#5157E8] shadow-lg' : 'bg-[#B3B8D8] group-hover:bg-[#5157E8] group-hover:shadow-md'} transition-all duration-300`}
+                  ${step.current ? 'bg-[#5157E8] shadow-lg' : 'bg-[#B3B8D8]'} transition-all duration-300`}
               >
                 {step.id}
               </div>
               <span className={`${
-                step.current ? 'text-[#23272E] font-medium' : 'text-[#6B7280] group-hover:text-[#5157E8]'
+                step.current ? 'text-[#23272E] font-medium' : 'text-[#6B7280]'
               } transition-colors duration-300`}>
                 {step.label}
               </span>
-            </Link>
+            </div>
           ))}
         </div>
       </div>
@@ -268,10 +272,10 @@ export default function LocalChallengesPage() {
               <span className="text-xl font-bold text-[#5157E8]">Local Challenge Library</span>
               <button
                 onClick={() => setShowInput(!showInput)}
-                className="text-[#5157E8] hover:text-[#3a3fa0] transition-colors"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-[#5157E8] hover:bg-[#3a3fa0] transition-colors shadow"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 5v14M5 12h14" />
                 </svg>
               </button>
             </div>
@@ -313,11 +317,11 @@ export default function LocalChallengesPage() {
                 <div
                   key={challenge.id}
                   className={`cursor-pointer p-3 rounded-lg transition-all duration-300 ${
-                    selectedId === challenge.id
+                    selectedIds.includes(challenge.id)
                       ? 'bg-[#F3F4FD] border-l-4 border-[#5157E8] shadow-md'
                       : 'hover:bg-gray-50 border-l-4 border-transparent'
                   }`}
-                  onClick={() => setSelectedId(challenge.id)}
+                  onClick={() => toggleSelect(challenge.id)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -445,12 +449,12 @@ export default function LocalChallengesPage() {
       </div>
 
       {/* 底部按钮 */}
-      <div className="flex-none px-4 py-4 flex justify-end">
-        <button
+      <div className="flex-none p-4 flex justify-end">
+        <button 
           onClick={handleNextStep}
           className="bg-[#5157E8] text-white px-8 py-3 rounded-full shadow-lg text-lg hover:bg-[#3a3fa0] transition-all"
         >
-          Next Step
+          Complete
         </button>
       </div>
     </div>

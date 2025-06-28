@@ -1,10 +1,19 @@
 'use client';
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
   const router = useRouter();
+
+  useEffect(() => {
+    // 每次进入首页时清空进度和选择
+    localStorage.removeItem('workshopProgress');
+    localStorage.removeItem('selectedFutureSignal');
+    localStorage.removeItem('selectedLocalChallenge');
+    localStorage.removeItem('interpretationData');
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white">
       <div className="absolute top-6 right-6 flex gap-4">

@@ -234,12 +234,17 @@ export default function InterpretationPage() {
     }
 
     try {
-      // 保存解释内容
       localStorage.setItem('interpretationData', JSON.stringify({
         content: interpretation
       }));
 
-      router.push('/tomorrow-headlines');
+      const progress = JSON.parse(localStorage.getItem('workshopProgress') || '[]');
+      if (!progress.includes('interpretation')) {
+        progress.push('interpretation');
+        localStorage.setItem('workshopProgress', JSON.stringify(progress));
+      }
+
+      router.push('/workshop');
     } catch (error) {
       console.error('Error saving interpretation data:', error);
       alert('An error occurred while saving the data. Please try again.');
@@ -262,18 +267,17 @@ export default function InterpretationPage() {
         </Link>
         <div className="flex items-center bg-[#C9D6F7]/20 rounded-full px-8 py-2 gap-6">
           {steps.map((step) => (
-            <Link
+            <div
               key={step.id}
-              href={step.path}
               className={`flex items-center gap-2 group transition-colors ${
-                step.current ? 'cursor-default' : 'hover:text-[#5157E8]'
+                step.current ? 'cursor-default' : ''
               }`}
             >
               <div 
                 className={`w-8 h-8 flex items-center justify-center rounded-full text-white text-base
-                  ${step.completed ? 'bg-[#B3B8D8] group-hover:bg-[#5157E8]' : 
+                  ${step.completed ? 'bg-[#B3B8D8]' : 
                     step.current ? 'bg-[#5157E8]' : 
-                    'bg-[#B3B8D8] group-hover:bg-[#5157E8]'} transition-colors`}
+                    'bg-[#B3B8D8]'} transition-colors`}
               >
                 {step.completed ? (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -284,11 +288,11 @@ export default function InterpretationPage() {
                 )}
               </div>
               <span className={`${
-                step.current ? 'text-[#23272E]' : 'text-[#6B7280] group-hover:text-[#5157E8]'
+                step.current ? 'text-[#23272E]' : 'text-[#6B7280]'
               } transition-colors`}>
                 {step.label}
               </span>
-            </Link>
+            </div>
           ))}
         </div>
       </div>
@@ -542,22 +546,16 @@ export default function InterpretationPage() {
               </>
             )}
           </div>
-        </div>
-      </div>
 
-      {/* 固定在右下角的下一步按钮 */}
-      <div className="fixed bottom-8 right-8">
-        <button
-          className={`px-6 py-2 text-white rounded-lg ${
-            !interpretation
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-[#5157E8] hover:bg-[#3a3fa0]'
-          }`}
-          onClick={handleNextStep}
-          disabled={!interpretation}
-        >
-          Next Step
-        </button>
+          <div className="flex-none p-4 flex justify-end">
+            <button
+              onClick={handleNextStep}
+              className="w-full bg-[#5157E8] text-white px-8 py-3 rounded-full shadow-lg text-lg hover:bg-[#3a3fa0] transition-all"
+            >
+              Complete
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

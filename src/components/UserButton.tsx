@@ -7,12 +7,11 @@ export default function UserButton() {
   return (
     <>
       <button
-        className="flex items-center gap-2 w-auto h-10 rounded-full bg-white px-3 shadow hover:bg-gray-100"
+        className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-lg hover:bg-gray-100 transition-colors"
         title="User Center"
         onClick={() => setOpen(true)}
       >
-        <span role="img" aria-label="user">👤</span>
-        <span className="text-sm font-medium text-gray-700">User Center</span>
+        <img src="/images/image_workshop/mine.png" alt="User Center" className="w-7 h-7" />
       </button>
       {open && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">

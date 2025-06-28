@@ -92,7 +92,7 @@ export default function FutureSignalsPage() {
       <div className="flex-none w-full flex justify-center py-6 relative bg-white shadow-sm">
         {/* 返回按钮 */}
         <Link 
-          href="/" 
+          href="/workshop" 
           className="absolute left-8 top-1/2 -translate-y-1/2 flex items-center text-[#5157E8] hover:text-[#3a3fa0] transition-colors"
         >
           <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,25 +102,24 @@ export default function FutureSignalsPage() {
         </Link>
         <div className="flex items-center bg-[#F3F4FD] rounded-full px-8 py-2 gap-6">
           {steps.map((step) => (
-            <Link
+            <div
               key={step.id}
-              href={step.path}
               className={`flex items-center gap-2 group transition-all duration-300 ${
-                step.current ? 'cursor-default' : 'hover:text-[#5157E8]'
+                step.current ? 'cursor-default' : ''
               }`}
             >
               <div 
                 className={`w-8 h-8 flex items-center justify-center rounded-full text-white text-base
-                  ${step.current ? 'bg-[#5157E8] shadow-lg' : 'bg-[#B3B8D8] group-hover:bg-[#5157E8] group-hover:shadow-md'} transition-all duration-300`}
+                  ${step.current ? 'bg-[#5157E8] shadow-lg' : 'bg-[#B3B8D8]'} transition-all duration-300`}
               >
                 {step.id}
               </div>
               <span className={`${
-                step.current ? 'text-[#23272E] font-medium' : 'text-[#6B7280] group-hover:text-[#5157E8]'
+                step.current ? 'text-[#23272E] font-medium' : 'text-[#6B7280]'
               } transition-colors duration-300`}>
                 {step.label}
               </span>
-            </Link>
+            </div>
           ))}
         </div>
       </div>
@@ -290,18 +289,23 @@ export default function FutureSignalsPage() {
               className="bg-[#5157E8] text-white px-8 py-3 rounded-full shadow-lg text-lg hover:bg-[#3a3fa0] transition-all"
               onClick={() => {
                 if (selected) {
-                  // 只保存必要的信息
                   const dataToSave = {
                     id: selected.id,
                     title: selected.title,
                     description: selected.summary
                   };
                   localStorage.setItem('selectedFutureSignal', JSON.stringify(dataToSave));
+                  
+                  const progress = JSON.parse(localStorage.getItem('workshopProgress') || '[]');
+                  if (!progress.includes('signal')) {
+                    progress.push('signal');
+                    localStorage.setItem('workshopProgress', JSON.stringify(progress));
+                  }
                 }
-                router.push('/local-challenges');
+                router.push('/workshop');
               }}
             >
-              Next Step
+              Complete
             </button>
           </div>
         </div>

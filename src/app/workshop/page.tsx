@@ -1,142 +1,126 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface WorkshopSection {
   id: number;
-  title: {
-    en: string;
-    zh: string;
-  };
-  subtitle: {
-    en: string;
-    zh: string;
-  };
-  description: {
-    en: string;
-    zh: string;
-  };
+  key: string;
+  title: string;
+  subtitle: string;
   path: string;
-  tags?: string[];
+  image: string;
 }
 
 const sections: WorkshopSection[] = [
   {
     id: 1,
-    title: {
-      en: 'signal',
-      zh: '信号'
-    },
-    subtitle: {
-      en: 'Choose Future Signals',
-      zh: '选择未来迹象'
-    },
-    description: {
-      en: 'We have curated a rich collection of future signals for you to explore and choose from.',
-      zh: '我们为您精心策划了丰富的未来信号集合供您探索和选择。'
-    },
+    key: 'signal',
+    title: 'Signal',
+    subtitle: '信号',
     path: '/future-signals',
-    tags: ['Future Signal Library', 'STEEP']
+    image: '/images/image_workshop/signal.png',
   },
   {
     id: 2,
-    title: {
-      en: 'issue',
-      zh: '议题'
-    },
-    subtitle: {
-      en: 'Enter Local Challenges',
-      zh: '输入地方挑战'
-    },
-    description: {
-      en: 'You can input or select Local Challenges as the background for subsequent analysis.',
-      zh: '您可以输入或选择地方性挑战作为后续分析的背景。'
-    },
+    key: 'issue',
+    title: 'Issue',
+    subtitle: '议题',
     path: '/local-challenges',
-    tags: ['Local Challenges Library']
+    image: '/images/image_workshop/issue.png',
   },
   {
     id: 3,
-    title: {
-      en: 'interpretation',
-      zh: '诠释'
-    },
-    subtitle: {
-      en: 'Build Future Interpretations',
-      zh: '构建未来诠释'
-    },
-    description: {
-      en: 'AI will assist you in generating Future Interpretations and Provotyping Cards, clarifying the logic of future evolution.',
-      zh: 'AI将协助您生成未来解释和原型卡片，阐明未来演化的逻辑。'
-    },
+    key: 'interpretation',
+    title: 'Interpretation',
+    subtitle: '诠释',
     path: '/interpretation',
-    tags: ['Provotyping Card', 'Interpretation Canvas', '"A will B+ because C"']
+    image: '/images/image_workshop/interpretation.png',
   },
   {
     id: 4,
-    title: {
-      en: 'tomorrow headline',
-      zh: '明日头条'
-    },
-    subtitle: {
-      en: "Generate Tomorrow Headline",
-      zh: '生成明日头条'
-    },
-    description: {
-      en: 'Based on the above analysis, AI will generate headlines for tomorrow.',
-      zh: '基于以上分析，AI将生成明日头条。'
-    },
+    key: 'tomorrow_headline',
+    title: 'Tomorrow Headline',
+    subtitle: '明日头条',
     path: '/tomorrow-headlines',
-    tags: ['Tomorrow Headline', 'Backcasting']
-  }
+    image: '/images/image_workshop/tomorrow_headline.png',
+  },
 ];
 
 export default function WorkshopPage() {
+  const router = useRouter();
+  const [completedSteps, setCompletedSteps] = useState<string[]>([]);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    const progress = JSON.parse(localStorage.getItem('workshopProgress') || '[]');
+    setCompletedSteps(progress);
+  }, []);
+
+  if (!isClient) {
+    return <div className="h-screen bg-white flex items-center justify-center text-gray-500">Loading...</div>;
+  }
+  
+  const nextStepId = completedSteps.length + 1;
+
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="workshop-container">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">Aizu Future Workshop</h1>
-          <h2 className="text-2xl text-gray-600">会津未来工作坊</h2>
+    <div className="min-h-screen flex flex-col items-center justify-start p-8">
+      <div className="w-full max-w-6xl mx-auto pt-20">
+        <div className="text-center mb-12 mt-0">
+          <h1 className="text-4xl font-bold text-gray-800">Recommended Activities</h1>
+          <p className="text-lg text-gray-500 mt-2">Following the step or Exploring the card you like!</p>
         </div>
         
-        <div className="cards-container">
-          {sections.map((section) => (
-            <Link 
-              key={section.id}
-              href={section.path}
-              className="workshop-card block"
-            >
-              <div className="card-content">
-                <div className="header-container">
-                  <div className="section-number">{section.id}</div>
-                  <div className="section-title">
-                    <div className="section-title-en">{section.title.en}</div>
-                    <div className="section-title-zh">{section.title.zh}</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+          {sections.map((section) => {
+            const isCompleted = completedSteps.includes(section.key);
+            const isNextStep = section.id === nextStepId;
+            const isLocked = !isCompleted && !isNextStep;
+
+            const handleClick = () => {
+              if (!isLocked) {
+                router.push(section.path);
+              }
+            };
+
+            return (
+              <div
+                key={section.id}
+                onClick={handleClick}
+                className={`
+                  w-[260px] h-[440px] rounded-xl transition-all duration-300 flex flex-col
+                  ${isLocked 
+                    ? 'bg-gray-100 cursor-not-allowed' 
+                    : 'bg-white cursor-pointer shadow-md hover:shadow-xl hover:-translate-y-1'
+                  }
+                  ${isNextStep ? 'border-2 border-[#5157E8]' : 'border-2 border-transparent'}
+                `}
+              >
+                <div className="p-4 flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-base font-bold shrink-0
+                    ${isCompleted || isNextStep ? 'bg-[#5157E8] text-white' : 'bg-gray-300 text-gray-700'}
+                  `}>
+                    {section.id}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 capitalize">{section.title}</h3>
+                    <p className="text-sm text-gray-500">{section.subtitle}</p>
                   </div>
                 </div>
-                <div className="section-info">
-                  <div className="section-info-title">
-                    <div className="subtitle-en">{section.subtitle.en}</div>
-                    <div className="subtitle-zh">{section.subtitle.zh}</div>
-                  </div>
-                  <div className="section-info-description">
-                    <div>{section.description.en}</div>
-                    <div>{section.description.zh}</div>
-                  </div>
-                  {section.tags && (
-                    <div className="tag-container">
-                      {section.tags.map((tag) => (
-                        <span key={tag} className="tag">{tag}</span>
-                      ))}
-                    </div>
-                  )}
+                
+                <div className="flex-grow bg-gray-50 m-4 mt-0 rounded-md flex items-center justify-center">
+                  <img 
+                    src={section.image} 
+                    alt={section.title} 
+                    className={`max-h-[200px] max-w-[80%] w-auto h-auto object-contain transition-all duration-300
+                      ${isLocked ? 'filter grayscale opacity-60' : ''}
+                    `} 
+                  />
                 </div>
               </div>
-            </Link>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
