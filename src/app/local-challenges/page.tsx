@@ -66,7 +66,6 @@ export default function LocalChallengesPage() {
   const [chatInput, setChatInput] = useState('');
   const [chatHistory, setChatHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
 
   // 从 localStorage 获取之前选择的 Future Signal
   const [selectedFutureSignal, setSelectedFutureSignal] = useState<any>(null);
@@ -103,16 +102,6 @@ export default function LocalChallengesPage() {
     };
   }, []);
 
-  // 选中挑战变化时，更新右侧AI区内容（取第一个选中项）
-  useEffect(() => {
-    if (selectedIds.length > 0) {
-      const challenge = challenges.find(c => c.id === selectedIds[0]);
-      setSelectedChallenge(challenge || null);
-    } else {
-      setSelectedChallenge(null);
-    }
-  }, [selectedIds, challenges]);
-
   const handleAddChallenge = () => {
     const errors: FormError = {};
     if (!newTitle.trim()) {
@@ -145,9 +134,9 @@ export default function LocalChallengesPage() {
   };
 
   const handleSendMessage = async () => {
-    if (!chatInput.trim() || !selectedChallenge) {
-      if (!selectedChallenge) {
-        const errorResponse = { role: 'assistant' as const, content: 'Please choose the challenge of a place first.' };
+    if (!chatInput.trim() || selectedIds.length === 0) {
+      if (selectedIds.length === 0) {
+        const errorResponse = { role: 'assistant' as const, content: 'Please choose at least one challenge first.' };
         setChatHistory(prev => [...prev, errorResponse]);
       }
       return;
@@ -159,6 +148,9 @@ export default function LocalChallengesPage() {
     setIsLoading(true);
     
     try {
+      const selectedChallenges = challenges.filter(c => selectedIds.includes(c.id));
+      const challengeTitles = selectedChallenges.map(c => c.title).join(', ');
+      
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -166,12 +158,10 @@ export default function LocalChallengesPage() {
         },
         body: JSON.stringify({
           message: chatInput,
-          systemPrompt: `作为一个了解会津地区的专家，你正在帮助用户探索以下地方挑战：
-
-          主题：${selectedChallenge.title}
-          描述：${selectedChallenge.description}
-
-          请根据用户的问题，结合这个地方挑战的特点，提供专业、有见地的回答。`
+          selectedChallenge: {
+            title: challengeTitles,
+            description: `Selected challenges: ${challengeTitles}`
+          }
         })
       });
 
@@ -222,7 +212,18 @@ export default function LocalChallengesPage() {
 
   // 多选切换
   const toggleSelect = (id: number) => {
-    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+    setSelectedIds(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(i => i !== id);
+      } else {
+        // 限制最多选择3个
+        if (prev.length >= 3) {
+          alert('最多只能选择3个挑战');
+          return prev;
+        }
+        return [...prev, id];
+      }
+    });
   };
 
   return (
@@ -357,11 +358,19 @@ export default function LocalChallengesPage() {
         <div className="w-1/2 bg-white rounded-xl shadow-lg flex flex-col min-h-0">
           <div className="flex-none p-4 border-b">
             <h2 className="text-xl font-bold text-[#5157E8]">AI Assistant</h2>
-            {selectedChallenge && (
+            {selectedIds.length > 0 && (
               <div className="mt-2 text-gray-600">
-                Current selected topic:
-                <div className="font-medium text-[#23272E]">{selectedChallenge.title}</div>
-                <div className="text-sm">{selectedChallenge.description}</div>
+                Current selected topics:
+                <div className="mt-1 space-y-1">
+                  {selectedIds.map(id => {
+                    const challenge = challenges.find(c => c.id === id);
+                    return challenge ? (
+                      <div key={challenge.id} className="font-medium text-[#23272E] text-sm">
+                        • {challenge.title}
+                      </div>
+                    ) : null;
+                  })}
+                </div>
               </div>
             )}
           </div>

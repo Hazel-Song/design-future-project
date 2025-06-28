@@ -5,6 +5,7 @@ import type { ChatCompletionMessageParam } from 'openai/resources';
 // 创建OpenAI客户端实例
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+  baseURL: 'https://api.gptplus5.com/v1',
   timeout: 60000, // 设置60秒超时
   maxRetries: 3,  // 最大重试次数
 });

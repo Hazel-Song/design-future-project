@@ -64,6 +64,7 @@ export default function InterpretationPage() {
     futureSignal: null,
     localChallenge: null
   });
+  const [selectedLocalChallenges, setSelectedLocalChallenges] = useState<Array<{id: number; title: string; description: string}>>([]);
   const [prototypingCard, setPrototypingCard] = useState<string>('');
   const [interpretation, setInterpretation] = useState<string>('');
   const [chatInput, setChatInput] = useState('');
@@ -102,11 +103,24 @@ export default function InterpretationPage() {
       if (savedLocalChallenge) {
         const parsedLocalChallenge = JSON.parse(savedLocalChallenge);
         console.log('Parsed Local Challenge:', parsedLocalChallenge);
-        if (parsedLocalChallenge.title) {  // 确保数据有效
+        
+        // 处理多选的情况
+        if (Array.isArray(parsedLocalChallenge)) {
+          // 如果是数组（多选），取第一个作为主要显示
+          if (parsedLocalChallenge.length > 0 && parsedLocalChallenge[0].title) {
+            setSelectedData(prev => ({
+              ...prev,
+              localChallenge: parsedLocalChallenge[0]
+            }));
+            setSelectedLocalChallenges(parsedLocalChallenge);
+          }
+        } else if (parsedLocalChallenge.title) {
+          // 如果是单个对象
           setSelectedData(prev => ({
             ...prev,
             localChallenge: parsedLocalChallenge
           }));
+          setSelectedLocalChallenges([parsedLocalChallenge]);
         }
       }
     } catch (error) {
@@ -139,7 +153,7 @@ export default function InterpretationPage() {
   };
 
   const handleGeneratePrototyping = async () => {
-    if (!selectedData.futureSignal || !selectedData.localChallenge) {
+    if (!selectedData.futureSignal || selectedLocalChallenges.length === 0) {
       alert('Please select the Future Signal and Local Challenge first');
       return;
     }
@@ -148,9 +162,16 @@ export default function InterpretationPage() {
     try {
       console.log('Sending request with data:', selectedData);
       
+      // 使用第一个挑战作为主要挑战，但传递所有挑战的信息
+      const mainChallenge = selectedLocalChallenges[0];
+      const allChallengeTitles = selectedLocalChallenges.map(c => c.title).join(', ');
+      
       const response = await axios.post('/api/generate-prototyping', {
         futureSignal: selectedData.futureSignal,
-        localChallenge: selectedData.localChallenge
+        localChallenge: {
+          ...mainChallenge,
+          allChallenges: allChallengeTitles
+        }
       });
 
       if (response.data && response.data.prototypingCard) {
@@ -168,17 +189,24 @@ export default function InterpretationPage() {
   };
 
   const handleGenerateInterpretation = async () => {
-    if (!prototypingCard || !selectedData.futureSignal || !selectedData.localChallenge) {
+    if (!prototypingCard || !selectedData.futureSignal || selectedLocalChallenges.length === 0) {
       alert('Please ensure all necessary content has been selected');
       return;
     }
     
     setIsInterpretationLoading(true);
     try {
+      // 使用第一个挑战作为主要挑战，但传递所有挑战的信息
+      const mainChallenge = selectedLocalChallenges[0];
+      const allChallengeTitles = selectedLocalChallenges.map(c => c.title).join(', ');
+      
       const response = await axios.post('/api/interpretation', {
         futureSignal: selectedData.futureSignal,
         prototypingCard: prototypingCard,
-        localChallenge: selectedData.localChallenge
+        localChallenge: {
+          ...mainChallenge,
+          allChallenges: allChallengeTitles
+        }
       });
 
       if (response.data && response.data.interpretation) {
@@ -349,7 +377,7 @@ export default function InterpretationPage() {
                   <button
                     className="px-3 py-1 text-sm text-white bg-[#5157E8] rounded-lg hover:bg-[#3a3fa0] transition-colors"
                     onClick={handleGeneratePrototyping}
-                    disabled={!selectedData.futureSignal || !selectedData.localChallenge}
+                    disabled={!selectedData.futureSignal || selectedLocalChallenges.length === 0}
                   >
                     Re-generate
                   </button>
@@ -386,10 +414,13 @@ export default function InterpretationPage() {
                   </Link>
                 </div>
                 <div className="text-gray-600">
-                  {selectedData.localChallenge?.title ? (
-                    <div>
-                      <div className="font-medium">{selectedData.localChallenge.title}</div>
-                      <div className="text-sm mt-1">{selectedData.localChallenge.description}</div>
+                  {selectedLocalChallenges.length > 0 ? (
+                    <div className="space-y-2">
+                      {selectedLocalChallenges.map((challenge) => (
+                        <div key={challenge.id} className="border-l-4 border-[#5157E8] pl-3 py-1">
+                          <div className="font-medium text-[#23272E]">{challenge.title}</div>
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <div className="text-red-500">Please select the Local Challenge first</div>
@@ -504,10 +535,10 @@ export default function InterpretationPage() {
             )}
           </div>
 
-          {/* 底部输入区域 */}
-          <div className="flex-none p-6 pb-20 space-y-4 border-t border-gray-200">
+          {/* 底部输入区域和Complete按钮紧贴 */}
+          <div className="flex flex-col gap-0 border-t border-gray-200">
             {interpretation && (
-              <>
+              <div className="p-6 space-y-4">
                 {/* 提示词模板 */}
                 <div className="space-y-2">
                   <div className="text-sm font-medium text-gray-700">Magic If Prompt</div>
@@ -543,17 +574,16 @@ export default function InterpretationPage() {
                     </svg>
                   </button>
                 </div>
-              </>
+              </div>
             )}
-          </div>
-
-          <div className="flex-none p-4 flex justify-end">
-            <button
-              onClick={handleNextStep}
-              className="w-full bg-[#5157E8] text-white px-8 py-3 rounded-full shadow-lg text-lg hover:bg-[#3a3fa0] transition-all"
-            >
-              Complete
-            </button>
+            <div className="p-4 flex justify-end border-t border-gray-200">
+              <button
+                onClick={handleNextStep}
+                className="w-full bg-[#5157E8] text-white px-8 py-3 rounded-full shadow-lg text-lg hover:bg-[#3a3fa0] transition-all"
+              >
+                Complete
+              </button>
+            </div>
           </div>
         </div>
       </div>
