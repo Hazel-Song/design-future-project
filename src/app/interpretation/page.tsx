@@ -577,12 +577,12 @@ export default function InterpretationPage() {
               </div>
             )}
             <div className="p-4 flex justify-end border-t border-gray-200">
-              <button
-                onClick={handleNextStep}
-                className="w-full bg-[#5157E8] text-white px-8 py-3 rounded-full shadow-lg text-lg hover:bg-[#3a3fa0] transition-all"
-              >
-                Complete
-              </button>
+            <button
+              onClick={handleNextStep}
+              className="w-full bg-[#5157E8] text-white px-8 py-3 rounded-full shadow-lg text-lg hover:bg-[#3a3fa0] transition-all"
+            >
+              Complete
+            </button>
             </div>
           </div>
         </div>
