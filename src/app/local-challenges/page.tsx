@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import ChatInterface from '@/components/ChatInterface';
+import AgentSelector, { AGENT_COLORS } from '@/components/AgentSelector';
 
 const steps = [
   { id: 1, label: 'Future Signal', path: '/future-signals', completed: true },
@@ -64,8 +65,10 @@ export default function LocalChallengesPage() {
   const [newDescription, setNewDescription] = useState('');
   const [formErrors, setFormErrors] = useState<FormError>({});
   const [chatInput, setChatInput] = useState('');
-  const [chatHistory, setChatHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([]);
+  const [chatHistory, setChatHistory] = useState<Array<{role: 'user' | 'assistant', content: string, name?: string, agentId?: string}>>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
+  const [showPromptTemplates, setShowPromptTemplates] = useState(false);
 
   // 从 localStorage 获取之前选择的 Future Signal
   const [selectedFutureSignal, setSelectedFutureSignal] = useState<any>(null);
@@ -141,6 +144,12 @@ export default function LocalChallengesPage() {
       }
       return;
     }
+
+    if (selectedAgents.length === 0) {
+      const errorResponse = { role: 'assistant' as const, content: 'Please select at least one discussion participant.' };
+      setChatHistory(prev => [...prev, errorResponse]);
+      return;
+    }
     
     const newMessage = { role: 'user' as const, content: chatInput };
     setChatHistory([...chatHistory, newMessage]);
@@ -149,39 +158,76 @@ export default function LocalChallengesPage() {
     
     try {
       const selectedChallenges = challenges.filter(c => selectedIds.includes(c.id));
-      const challengeTitles = selectedChallenges.map(c => c.title).join(', ');
+      const challengeTitles = selectedChallenges.map(c => c.title);
       
-      const response = await fetch('/api/chat', {
+      const response = await fetch('/api/multi-agent-chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           message: chatInput,
-          selectedChallenge: {
-            title: challengeTitles,
-            description: `Selected challenges: ${challengeTitles}`
-          }
+          selectedAgents,
+          context: {
+            topic: 'Local Challenges Discussion',
+            selectedChallenges: challengeTitles
+          },
+          conversationHistory: chatHistory
         })
       });
 
-      let data;
-      try {
-        data = await response.json();
-      } catch (e) {
-        console.error('JSON parse error:', e);
-        throw new Error('The server response format is incorrect');
-      }
-      
       if (!response.ok) {
-        throw new Error(data.error || 'Request Failed');
+        throw new Error('Request Failed');
       }
 
-      if (data.reply) {
-        const aiResponse = { role: 'assistant' as const, content: data.reply };
-        setChatHistory(prev => [...prev, aiResponse]);
-      } else {
-        throw new Error('The server returned data format is incorrect');
+      // 处理流式响应
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No reader available');
+      }
+
+      const decoder = new TextDecoder();
+      let currentAgentMessage: { role: 'assistant', content: string, name?: string, agentId?: string } | null = null;
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+        
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n').filter(line => line.trim());
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              
+              if (data.type === 'agent_start') {
+                currentAgentMessage = {
+                  role: 'assistant',
+                  content: '',
+                  name: data.name,
+                  agentId: data.agentId
+                };
+                setChatHistory(prev => [...prev, currentAgentMessage!]);
+              } else if (data.type === 'content' && currentAgentMessage) {
+                currentAgentMessage.content += data.content;
+                setChatHistory(prev => {
+                  const newHistory = [...prev];
+                  newHistory[newHistory.length - 1] = { ...currentAgentMessage! };
+                  return newHistory;
+                });
+              } else if (data.type === 'agent_end') {
+                currentAgentMessage = null;
+              } else if (data.type === 'done') {
+                setIsLoading(false);
+                return;
+              }
+            } catch (e) {
+              console.error('Error parsing SSE data:', e);
+            }
+          }
+        }
       }
     } catch (error) {
       console.error('Error in chat:', error);
@@ -193,6 +239,14 @@ export default function LocalChallengesPage() {
 
   const usePromptTemplate = (prompt: string) => {
     setChatInput(prompt);
+  };
+
+  const handleAgentToggle = (agentId: string) => {
+    setSelectedAgents(prev => 
+      prev.includes(agentId) 
+        ? prev.filter(id => id !== agentId)
+        : [...prev, agentId]
+    );
   };
 
   const handleNextStep = () => {
@@ -267,17 +321,18 @@ export default function LocalChallengesPage() {
       {/* 主体内容 */}
       <div className="flex-1 flex px-4 gap-6 w-full min-h-0 py-4">
         {/* 左侧挑战列表 */}
-        <div className="w-1/2 bg-white rounded-xl shadow-lg flex flex-col min-h-0">
+        <div className="w-1/3 bg-white rounded-xl shadow-lg flex flex-col min-h-0">
           <div className="flex-none p-4">
             <div className="mb-3 flex items-center justify-between">
               <span className="text-xl font-bold text-[#5157E8]">Local Challenge Library</span>
               <button
                 onClick={() => setShowInput(!showInput)}
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-[#5157E8] hover:bg-[#3a3fa0] transition-colors shadow"
+                className="px-4 py-2 flex items-center gap-2 rounded-lg bg-[#5157E8] hover:bg-[#3a3fa0] transition-colors shadow text-white text-sm font-medium"
               >
-                <svg className="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 5v14M5 12h14" />
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14M5 12h14" />
                 </svg>
+                Add New
               </button>
             </div>
             {showInput && (
@@ -355,7 +410,7 @@ export default function LocalChallengesPage() {
         </div>
 
         {/* 右侧AI助手对话区 */}
-        <div className="w-1/2 bg-white rounded-xl shadow-lg flex flex-col min-h-0">
+        <div className="w-2/3 bg-white rounded-xl shadow-lg flex flex-col min-h-0">
           <div className="flex-none p-4 border-b">
             <h2 className="text-xl font-bold text-[#5157E8]">AI Assistant</h2>
             {selectedIds.length > 0 && (
@@ -375,84 +430,117 @@ export default function LocalChallengesPage() {
             )}
           </div>
 
-          {/* 预设提示词区域 */}
-          <div className="flex-none px-4 py-3 border-b bg-gray-50">
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {promptTemplates.map(template => (
-                <button
-                  key={template.id}
-                  onClick={() => usePromptTemplate(template.prompt)}
-                  className="flex-none px-4 py-2 bg-white rounded-full text-sm text-gray-600 hover:text-[#5157E8] hover:shadow transition-all whitespace-nowrap border hover:border-[#5157E8]"
-                >
-                  {template.title}
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* AI助手区域内部分割：左3/4对话区 + 右1/4角色选择区 */}
+          <div className="flex-1 flex min-h-0">
+            {/* 左侧3/4：对话区域 */}
+            <div className="w-3/4 flex flex-col min-h-0 border-r">
 
-          {/* 对话历史区域 */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {chatHistory.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div className={`flex items-start gap-3 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                  <div className={`w-10 h-10 rounded-full flex-none ${
-                    message.role === 'user' ? 'bg-[#5157E8]' : 'bg-[#10B981]'
-                  } flex items-center justify-center text-white`}>
-                    {message.role === 'user' ? 'Me' : 'AI'}
+
+              {/* 对话历史区域 */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {chatHistory.map((message, index) => {
+                  const getAgentColor = (agentId?: string) => {
+                    if (!agentId) return 'bg-[#10B981]';
+                    return AGENT_COLORS[agentId] || 'bg-[#10B981]';
+                  };
+
+                  return (
+                    <div
+                      key={index}
+                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div className={`flex items-start gap-3 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                        <div className={`w-10 h-10 rounded-full flex-none ${
+                          message.role === 'user' ? 'bg-[#5157E8]' : getAgentColor(message.agentId)
+                        } flex items-center justify-center text-white text-xs`}>
+                          {message.role === 'user' ? 'Me' : (message.name ? message.name.slice(0, 2) : 'AI')}
+                        </div>
+                        <div className={`py-2 px-4 rounded-2xl ${
+                          message.role === 'user' 
+                            ? 'bg-[#5157E8] text-white rounded-tr-none' 
+                            : 'bg-gray-100 text-gray-700 rounded-tl-none'
+                        }`}>
+                          {message.name && message.role === 'assistant' && (
+                            <div className="text-xs font-medium text-[#5157E8] mb-1">{message.name}</div>
+                          )}
+                          {message.content}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="flex items-start gap-3 max-w-[80%]">
+                      <div className="w-10 h-10 rounded-full bg-[#10B981] flex-none flex items-center justify-center text-white">
+                        AI
+                      </div>
+                      <div className="py-2 px-4 rounded-2xl bg-gray-100 text-gray-700 rounded-tl-none">
+                        Thinking...
+                      </div>
+                    </div>
                   </div>
-                  <div className={`py-2 px-4 rounded-2xl ${
-                    message.role === 'user' 
-                      ? 'bg-[#5157E8] text-white rounded-tr-none' 
-                      : 'bg-gray-100 text-gray-700 rounded-tl-none'
-                  }`}>
-                    {message.content}
+                )}
+              </div>
+
+              {/* 输入区域 */}
+              <div className="flex-none p-4 border-t bg-gray-50 relative">
+                {/* 提示词模板弹出区域 */}
+                {showPromptTemplates && (
+                  <div className="absolute bottom-full left-4 right-4 mb-2 bg-white rounded-lg shadow-lg border z-10 overflow-hidden">
+                    <div className="py-2">
+                      {promptTemplates.map((template, index) => (
+                        <button
+                          key={template.id}
+                          onClick={() => {
+                            usePromptTemplate(template.prompt);
+                            setShowPromptTemplates(false);
+                          }}
+                          className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 hover:text-[#5157E8] transition-colors border-b border-gray-100 last:border-b-0"
+                        >
+                          <div className="font-medium">{template.title}</div>
+                          <div className="text-xs text-gray-500 mt-1 truncate">{template.prompt}</div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
+                )}
+                
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onFocus={() => setShowPromptTemplates(true)}
+                    onBlur={() => setTimeout(() => setShowPromptTemplates(false), 200)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                        setShowPromptTemplates(false);
+                      }
+                    }}
+                    placeholder="输入您的问题..."
+                    className="flex-1 px-4 py-3 rounded-full border focus:outline-none focus:ring-2 focus:ring-[#5157E8] bg-white"
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={isLoading}
+                    className={`px-6 py-3 rounded-full bg-[#5157E8] text-white transition-all ${
+                      isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#3a3fa0]'
+                    }`}
+                  >
+                    Send
+                  </button>
                 </div>
               </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="flex items-start gap-3 max-w-[80%]">
-                  <div className="w-10 h-10 rounded-full bg-[#10B981] flex-none flex items-center justify-center text-white">
-                    AI
-                  </div>
-                  <div className="py-2 px-4 rounded-2xl bg-gray-100 text-gray-700 rounded-tl-none">
-                    Thinking...
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 输入区域 */}
-          <div className="flex-none p-4 border-t bg-gray-50">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-                placeholder="输入您的问题..."
-                className="flex-1 px-4 py-3 rounded-full border focus:outline-none focus:ring-2 focus:ring-[#5157E8] bg-white"
-              />
-              <button
-                onClick={handleSendMessage}
-                disabled={isLoading}
-                className={`px-6 py-3 rounded-full bg-[#5157E8] text-white transition-all ${
-                  isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#3a3fa0]'
-                }`}
-              >
-                Send
-              </button>
             </div>
+
+            {/* 右侧1/4：角色选择区域 */}
+            <AgentSelector 
+              selectedAgents={selectedAgents}
+              onAgentToggle={handleAgentToggle}
+            />
           </div>
         </div>
       </div>

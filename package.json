@@ -11,6 +11,9 @@
   "dependencies": {
     "@headlessui/react": "^1.7.19",
     "@heroicons/react": "^2.2.0",
+    "@langchain/core": "^0.3.72",
+    "@langchain/langgraph": "^0.4.8",
+    "@langchain/openai": "^0.6.9",
     "@tailwindcss/aspect-ratio": "^0.4.2",
     "axios": "^1.6.7",
     "gopd": "^1.2.0",

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
+import AgentSelector, { AGENT_COLORS } from '@/components/AgentSelector';
 
 const steps = [
   { id: 1, label: 'Future Signal', path: '/future-signals', completed: true },
@@ -68,7 +69,8 @@ export default function InterpretationPage() {
   const [prototypingCard, setPrototypingCard] = useState<string>('');
   const [interpretation, setInterpretation] = useState<string>('');
   const [chatInput, setChatInput] = useState('');
-  const [chatHistory, setChatHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([]);
+  const [chatHistory, setChatHistory] = useState<Array<{role: 'user' | 'assistant', content: string, name?: string, agentId?: string}>>([]);
+  const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
   
   // 为每个操作创建独立的 loading 状态
   const [isPrototypingLoading, setIsPrototypingLoading] = useState(false);
@@ -90,37 +92,51 @@ export default function InterpretationPage() {
       console.log('Saved Local Challenge:', savedLocalChallenge);
 
       if (savedFutureSignal) {
-        const parsedFutureSignal = JSON.parse(savedFutureSignal);
-        console.log('Parsed Future Signal:', parsedFutureSignal);
-        if (parsedFutureSignal.title) {  // 确保数据有效
-          setSelectedData(prev => ({
-            ...prev,
-            futureSignal: parsedFutureSignal
-          }));
+        try {
+          const parsedFutureSignal = JSON.parse(savedFutureSignal);
+          console.log('Parsed Future Signal:', parsedFutureSignal);
+          if (parsedFutureSignal && parsedFutureSignal.title) {  // 确保数据有效
+            setSelectedData(prev => ({
+              ...prev,
+              futureSignal: parsedFutureSignal
+            }));
+          } else {
+            console.warn('Invalid Future Signal data:', parsedFutureSignal);
+          }
+        } catch (e) {
+          console.error('Error parsing Future Signal:', e);
         }
       }
 
       if (savedLocalChallenge) {
-        const parsedLocalChallenge = JSON.parse(savedLocalChallenge);
-        console.log('Parsed Local Challenge:', parsedLocalChallenge);
-        
-        // 处理多选的情况
-        if (Array.isArray(parsedLocalChallenge)) {
-          // 如果是数组（多选），取第一个作为主要显示
-          if (parsedLocalChallenge.length > 0 && parsedLocalChallenge[0].title) {
+        try {
+          const parsedLocalChallenge = JSON.parse(savedLocalChallenge);
+          console.log('Parsed Local Challenge:', parsedLocalChallenge);
+          
+          // 处理多选的情况
+          if (Array.isArray(parsedLocalChallenge)) {
+            // 如果是数组（多选），取第一个作为主要显示
+            if (parsedLocalChallenge.length > 0 && parsedLocalChallenge[0] && parsedLocalChallenge[0].title) {
+              setSelectedData(prev => ({
+                ...prev,
+                localChallenge: parsedLocalChallenge[0]
+              }));
+              setSelectedLocalChallenges(parsedLocalChallenge);
+            } else {
+              console.warn('Invalid Local Challenge array data:', parsedLocalChallenge);
+            }
+          } else if (parsedLocalChallenge && parsedLocalChallenge.title) {
+            // 如果是单个对象
             setSelectedData(prev => ({
               ...prev,
-              localChallenge: parsedLocalChallenge[0]
+              localChallenge: parsedLocalChallenge
             }));
-            setSelectedLocalChallenges(parsedLocalChallenge);
+            setSelectedLocalChallenges([parsedLocalChallenge]);
+          } else {
+            console.warn('Invalid Local Challenge data:', parsedLocalChallenge);
           }
-        } else if (parsedLocalChallenge.title) {
-          // 如果是单个对象
-          setSelectedData(prev => ({
-            ...prev,
-            localChallenge: parsedLocalChallenge
-          }));
-          setSelectedLocalChallenges([parsedLocalChallenge]);
+        } catch (e) {
+          console.error('Error parsing Local Challenge:', e);
         }
       }
     } catch (error) {
@@ -189,8 +205,19 @@ export default function InterpretationPage() {
   };
 
   const handleGenerateInterpretation = async () => {
-    if (!prototypingCard || !selectedData.futureSignal || selectedLocalChallenges.length === 0) {
-      alert('Please ensure all necessary content has been selected');
+    // 更详细的验证
+    if (!prototypingCard) {
+      alert('Please generate the Prototyping Card first');
+      return;
+    }
+    
+    if (!selectedData.futureSignal) {
+      alert('Please select a Future Signal from the previous page');
+      return;
+    }
+    
+    if (selectedLocalChallenges.length === 0) {
+      alert('Please select Local Challenges from the previous page');
       return;
     }
     
@@ -199,6 +226,15 @@ export default function InterpretationPage() {
       // 使用第一个挑战作为主要挑战，但传递所有挑战的信息
       const mainChallenge = selectedLocalChallenges[0];
       const allChallengeTitles = selectedLocalChallenges.map(c => c.title).join(', ');
+      
+      console.log('Sending interpretation request:', {
+        futureSignal: selectedData.futureSignal,
+        prototypingCard: prototypingCard,
+        localChallenge: {
+          ...mainChallenge,
+          allChallenges: allChallengeTitles
+        }
+      });
       
       const response = await axios.post('/api/interpretation', {
         futureSignal: selectedData.futureSignal,
@@ -215,8 +251,13 @@ export default function InterpretationPage() {
         throw new Error('Invalid response data');
       }
     } catch (error) {
-      console.error('An error occurred while generating the interpretation. Please try again.');
-      alert('An error occurred while generating the interpretation. Please try again.');
+      console.error('Error generating interpretation:', error);
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.details || error.response?.data?.error || error.message;
+        alert(`An error occurred while generating the interpretation: ${errorMessage}`);
+      } else {
+        alert('An error occurred while generating the interpretation. Please try again.');
+      }
     } finally {
       setIsInterpretationLoading(false);
     }
@@ -224,6 +265,12 @@ export default function InterpretationPage() {
 
   const handleSendMessage = async () => {
     if (!chatInput.trim()) return;
+
+    if (selectedAgents.length === 0) {
+      const errorResponse = { role: 'assistant' as const, content: 'Please select at least one discussion participant.' };
+      setChatHistory(prev => [...prev, errorResponse]);
+      return;
+    }
     
     const newMessage = { role: 'user' as const, content: chatInput };
     setChatHistory([...chatHistory, newMessage]);
@@ -231,16 +278,75 @@ export default function InterpretationPage() {
     setIsChatLoading(true);
     
     try {
-      const response = await axios.post('/api/magic_if', {
-        interpretation: interpretation,
-        templatePrompt: chatInput
+      const response = await fetch('/api/multi-agent-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: chatInput,
+          selectedAgents,
+          context: {
+            topic: 'Future Interpretation Discussion',
+            selectedChallenges: selectedLocalChallenges.map(c => c.title),
+            interpretation: interpretation
+          },
+          conversationHistory: chatHistory
+        })
       });
+
+      if (!response.ok) {
+        throw new Error('Request Failed');
+      }
+
+      // 处理流式响应
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('No reader available');
+      }
+
+      const decoder = new TextDecoder();
+      let currentAgentMessage: { role: 'assistant', content: string, name?: string, agentId?: string } | null = null;
       
-      if (response.data && response.data.reply) {
-        const aiResponse = { role: 'assistant' as const, content: response.data.reply };
-        setChatHistory(prev => [...prev, aiResponse]);
-      } else {
-        throw new Error('Invalid response data');
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+        
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n').filter(line => line.trim());
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              
+              if (data.type === 'agent_start') {
+                currentAgentMessage = {
+                  role: 'assistant',
+                  content: '',
+                  name: data.name,
+                  agentId: data.agentId
+                };
+                setChatHistory(prev => [...prev, currentAgentMessage!]);
+              } else if (data.type === 'content' && currentAgentMessage) {
+                currentAgentMessage.content += data.content;
+                setChatHistory(prev => {
+                  const newHistory = [...prev];
+                  newHistory[newHistory.length - 1] = { ...currentAgentMessage! };
+                  return newHistory;
+                });
+              } else if (data.type === 'agent_end') {
+                currentAgentMessage = null;
+              } else if (data.type === 'done') {
+                setIsChatLoading(false);
+                return;
+              }
+            } catch (e) {
+              console.error('Error parsing SSE data:', e);
+            }
+          }
+        }
       }
     } catch (error) {
       console.error('An error occurred while sending the message. Please try again.');
@@ -253,6 +359,14 @@ export default function InterpretationPage() {
   const usePromptTemplate = (prompt: string) => {
     setChatInput(prompt);
     handleSendMessage();  // 自动发送模板消息
+  };
+
+  const handleAgentToggle = (agentId: string) => {
+    setSelectedAgents(prev => 
+      prev.includes(agentId) 
+        ? prev.filter(id => id !== agentId)
+        : [...prev, agentId]
+    );
   };
 
   const handleNextStep = () => {
@@ -328,26 +442,26 @@ export default function InterpretationPage() {
       {/* 主体两栏布局 */}
       <div className="flex-1 flex px-6 gap-6 w-full min-h-0 py-6">
         {/* 左侧区域 */}
-        <div className="w-1/2 bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col min-h-0">
+        <div className="w-1/3 bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col min-h-0">
           {/* 标题 */}
-          <div className="flex-none p-6">
-            <div className="mb-2">
-              <span className="text-lg font-bold text-[#5157E8]">Future Interpretation Canvas</span>
+          <div className="flex-none p-4">
+            <div className="mb-3">
+              <span className="text-xl font-bold text-[#5157E8]">Future Interpretation Canvas</span>
             </div>
             <div className="border-b border-gray-200" />
           </div>
 
           {/* 内容区域 */}
-          <div className="flex-1 overflow-auto p-6">
-            <div className="space-y-6">
+          <div className="flex-1 overflow-auto p-4">
+            <div className="space-y-4">
               {/* Future Signal 区域 */}
-              <div className="bg-gray-50 p-6 rounded-xl">
-                <div className="flex items-center justify-between mb-2">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <div className="flex items-center justify-center px-2 py-1 bg-[#5157E8] text-white text-xs rounded">
-                      <span>A: A social subject/problem</span>
+                    <div className="flex items-center justify-center px-2 py-1 bg-[#5157E8] text-white text-xs rounded font-medium">
+                      <span>A</span>
                     </div>
-                    <h3 className="text-lg font-medium">Future Signal</h3>
+                    <h3 className="text-base font-semibold text-gray-800">Future Signal</h3>
                   </div>
                   <Link 
                     href="/future-signals"
@@ -356,55 +470,55 @@ export default function InterpretationPage() {
                     Re-select
                   </Link>
                 </div>
-                <div className="text-gray-600">
+                <div className="text-gray-700">
                   {selectedData.futureSignal?.title ? (
-                    <div className="font-medium">{selectedData.futureSignal.title}</div>
+                    <div className="font-medium text-sm leading-relaxed">{selectedData.futureSignal.title}</div>
                   ) : (
-                    <div className="text-red-500">Please select the Future Signal first</div>
+                    <div className="text-red-500 text-sm">Please select the Future Signal first</div>
                   )}
                 </div>
               </div>
 
               {/* Prototyping Card 区域 */}
-              <div className="bg-white border-2 border-[#5157E8] p-6 rounded-xl">
-                <div className="flex items-center justify-between mb-2">
+              <div className="bg-white border-2 border-[#5157E8] p-4 rounded-lg">
+                <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <div className="flex items-center justify-center px-2 py-1 bg-[#5157E8] text-white text-xs rounded">
-                      <span>B: The trend or change behavior</span>
+                    <div className="flex items-center justify-center px-2 py-1 bg-[#5157E8] text-white text-xs rounded font-medium">
+                      <span>B</span>
                     </div>
-                    <h3 className="text-lg font-medium">Prototyping Card</h3>
+                    <h3 className="text-base font-semibold text-gray-800">Prototyping Card</h3>
                   </div>
                   <button
-                    className="px-3 py-1 text-sm text-white bg-[#5157E8] rounded-lg hover:bg-[#3a3fa0] transition-colors"
+                    className="px-3 py-1 text-xs text-white bg-[#5157E8] rounded hover:bg-[#3a3fa0] transition-colors font-medium"
                     onClick={handleGeneratePrototyping}
                     disabled={!selectedData.futureSignal || selectedLocalChallenges.length === 0}
                   >
-                    Re-generate
+                    Generate
                   </button>
                 </div>
-                <div className="min-h-[80px] bg-gray-50 rounded-lg p-4">
+                <div className="min-h-[80px] bg-gray-50 rounded p-3">
                   {isPrototypingLoading ? (
-                    <div className="flex items-center justify-center h-full text-gray-500">
+                    <div className="flex items-center justify-center h-full text-gray-500 text-sm">
                       Generating...
                     </div>
                   ) : prototypingCard ? (
-                    <div className="text-gray-700">{prototypingCard}</div>
+                    <div className="text-gray-700 text-sm leading-relaxed">{prototypingCard}</div>
                   ) : (
-                    <div className="flex items-center justify-center h-full text-gray-500">
-                      Click the "Re-generate" button to generate Prototyping
+                    <div className="flex items-center justify-center h-full text-gray-500 text-sm text-center">
+                      Click "Generate" to create Prototyping
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Local Challenge 区域 */}
-              <div className="bg-gray-50 p-6 rounded-xl">
-                <div className="flex items-center justify-between mb-2">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <div className="flex items-center justify-center px-2 py-1 bg-[#5157E8] text-white text-xs rounded">
-                      <span>C: Future signal/change factor</span>
+                    <div className="flex items-center justify-center px-2 py-1 bg-[#5157E8] text-white text-xs rounded font-medium">
+                      <span>C</span>
                     </div>
-                    <h3 className="text-lg font-medium">Local Challenge</h3>
+                    <h3 className="text-base font-semibold text-gray-800">Local Challenge</h3>
                   </div>
                   <Link 
                     href="/local-challenges"
@@ -413,44 +527,44 @@ export default function InterpretationPage() {
                     Re-select
                   </Link>
                 </div>
-                <div className="text-gray-600">
+                <div className="text-gray-700">
                   {selectedLocalChallenges.length > 0 ? (
                     <div className="space-y-2">
                       {selectedLocalChallenges.map((challenge) => (
-                        <div key={challenge.id} className="border-l-4 border-[#5157E8] pl-3 py-1">
-                          <div className="font-medium text-[#23272E]">{challenge.title}</div>
+                        <div key={challenge.id} className="border-l-3 border-[#5157E8] pl-3 py-1">
+                          <div className="font-medium text-sm text-[#23272E] leading-relaxed">{challenge.title}</div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-red-500">Please select the Local Challenge first</div>
+                    <div className="text-red-500 text-sm">Please select the Local Challenge first</div>
                   )}
                 </div>
               </div>
 
               {/* Interpretation 生成区域 */}
-              <div className="bg-gray-50 p-6 rounded-xl">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-medium">Interpretation</h3>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-semibold text-gray-800">Interpretation</h3>
                   <button
-                    className="px-3 py-1 text-sm text-white bg-[#5157E8] rounded-lg hover:bg-[#3a3fa0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 py-1 text-xs text-white bg-[#5157E8] rounded hover:bg-[#3a3fa0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                     onClick={handleGenerateInterpretation}
                     disabled={!canGenerateInterpretation}
                   >
-                    Generate Interpretation
+                    Generate
                   </button>
                 </div>
-                <div className="min-h-[120px] bg-white rounded-lg p-4 border border-gray-200">
+                <div className="min-h-[120px] bg-white rounded p-3 border border-gray-200">
                   {isInterpretationLoading ? (
-                    <div className="flex items-center justify-center h-full text-gray-500">
+                    <div className="flex items-center justify-center h-full text-gray-500 text-sm">
                       Generating...
                     </div>
                   ) : (
                     <textarea
-                      className="w-full h-full min-h-[100px] text-gray-700 focus:outline-none resize-none"
+                      className="w-full h-full min-h-[100px] text-gray-700 text-sm leading-relaxed focus:outline-none resize-none"
                       value={interpretation}
                       onChange={(e) => setInterpretation(e.target.value)}
-                      placeholder='Click the "Generate Interpretation" button to generate Interpretation, or directly input here...'
+                      placeholder='Click "Generate" to create interpretation, or input directly...'
                     />
                   )}
                 </div>
@@ -459,133 +573,168 @@ export default function InterpretationPage() {
           </div>
         </div>
 
-        {/* 右侧对话区 */}
-        <div className="w-1/2 bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col min-h-0">
-          <div className="flex-none p-6 border-b border-gray-200">
-            <h3 className="text-lg font-bold text-[#5157E8]">AI Assistant</h3>
-          </div>
+                 {/* 右侧对话区 */}
+         <div className="w-2/3 bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col min-h-0">
+           <div className="flex-none p-6 border-b border-gray-200">
+             <h3 className="text-lg font-bold text-[#5157E8]">AI Assistant</h3>
+           </div>
 
-          {/* 对话历史 */}
-          <div className="flex-1 overflow-auto p-6 space-y-4">
-            {!interpretation ? (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                Please generate Interpretation first
-              </div>
-            ) : (
-              <>
-                {chatHistory.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`max-w-[80%] p-3 rounded-lg ${
-                        message.role === 'user'
-                          ? 'bg-[#5157E8] text-white'
-                          : 'bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      {message.role === 'assistant' ? (
-                        <ReactMarkdown
-                          components={{
-                            // @ts-ignore
-                            h1: ({children}) => <h1 className="text-xl font-bold mb-4 text-[#5157E8]">{children}</h1>,
-                            // @ts-ignore
-                            h2: ({children}) => <h2 className="text-lg font-bold mb-3 text-gray-800">{children}</h2>,
-                            // @ts-ignore
-                            h3: ({children}) => <h3 className="text-base font-bold mb-2 text-gray-700">{children}</h3>,
-                            // @ts-ignore
-                            p: ({children}) => <p className="text-gray-600 mb-4 leading-relaxed">{children}</p>,
-                            // @ts-ignore
-                            ul: ({children}) => <ul className="list-disc pl-6 mb-4 space-y-2">{children}</ul>,
-                            // @ts-ignore
-                            ol: ({children}) => <ol className="list-decimal pl-6 mb-4 space-y-2">{children}</ol>,
-                            // @ts-ignore
-                            li: ({children}) => <li className="text-gray-600">{children}</li>,
-                            // @ts-ignore
-                            strong: ({children}) => <strong className="font-bold text-gray-900">{children}</strong>,
-                            // @ts-ignore
-                            em: ({children}) => <em className="italic text-gray-700">{children}</em>,
-                            // @ts-ignore
-                            blockquote: ({children}) => (
-                              <blockquote className="border-l-4 border-[#5157E8] pl-4 py-2 mb-4 bg-gray-50 text-gray-600 italic rounded-r">
-                                {children}
-                              </blockquote>
-                            ),
-                            // @ts-ignore
-                            code: ({children}) => <code className="bg-gray-100 px-1.5 py-0.5 rounded text-[#5157E8] text-sm">{children}</code>
-                          }}
-                        >
-                          {message.content}
-                        </ReactMarkdown>
-                      ) : (
-                        message.content
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {isChatLoading && (
-                  <div className="flex justify-start">
-                    <div className="bg-gray-100 text-gray-700 p-3 rounded-lg">
-                      Thinking...
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+           {/* AI助手区域内部分割：左3/4对话区 + 右1/4角色选择区 */}
+           <div className="flex-1 flex min-h-0">
+             {/* 左侧3/4：对话区域 */}
+             <div className="w-3/4 flex flex-col min-h-0 border-r">
+               {/* 对话历史 */}
+               <div className="flex-1 overflow-auto p-6 space-y-4">
+                 {!interpretation ? (
+                   <div className="flex items-center justify-center h-full text-gray-500">
+                     Please generate Interpretation first
+                   </div>
+                 ) : (
+                   <>
+                     {chatHistory.map((message, index) => {
+                       const getAgentColor = (agentId?: string) => {
+                         if (!agentId) return 'bg-[#10B981]';
+                         return AGENT_COLORS[agentId] || 'bg-[#10B981]';
+                       };
 
-          {/* 底部输入区域和Complete按钮紧贴 */}
-          <div className="flex flex-col gap-0 border-t border-gray-200">
-            {interpretation && (
-              <div className="p-6 space-y-4">
-                {/* 提示词模板 */}
-                <div className="space-y-2">
-                  <div className="text-sm font-medium text-gray-700">Magic If Prompt</div>
-                  <div className="flex flex-wrap gap-2">
-                    {magicIfTemplates.map(template => (
-                      <button
-                        key={template.id}
-                        className="px-3 py-1.5 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
-                        onClick={() => usePromptTemplate(template.prompt)}
-                      >
-                        {template.title}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                       return (
+                         <div
+                           key={index}
+                           className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                         >
+                           <div className={`flex items-start gap-3 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                             <div className={`w-10 h-10 rounded-full flex-none ${
+                               message.role === 'user' ? 'bg-[#5157E8]' : getAgentColor(message.agentId)
+                             } flex items-center justify-center text-white text-xs`}>
+                               {message.role === 'user' ? 'Me' : (message.name ? message.name.slice(0, 2) : 'AI')}
+                             </div>
+                             <div className={`py-2 px-4 rounded-2xl ${
+                               message.role === 'user' 
+                                 ? 'bg-[#5157E8] text-white rounded-tr-none' 
+                                 : 'bg-gray-100 text-gray-700 rounded-tl-none'
+                             }`}>
+                               {message.name && message.role === 'assistant' && (
+                                 <div className="text-xs font-medium text-[#5157E8] mb-1">{message.name}</div>
+                               )}
+                               {message.role === 'assistant' ? (
+                                 <ReactMarkdown
+                                   components={{
+                                     // @ts-ignore
+                                     h1: ({children}) => <h1 className="text-xl font-bold mb-4 text-[#5157E8]">{children}</h1>,
+                                     // @ts-ignore
+                                     h2: ({children}) => <h2 className="text-lg font-bold mb-3 text-gray-800">{children}</h2>,
+                                     // @ts-ignore
+                                     h3: ({children}) => <h3 className="text-base font-bold mb-2 text-gray-700">{children}</h3>,
+                                     // @ts-ignore
+                                     p: ({children}) => <p className="text-gray-600 mb-4 leading-relaxed">{children}</p>,
+                                     // @ts-ignore
+                                     ul: ({children}) => <ul className="list-disc pl-6 mb-4 space-y-2">{children}</ul>,
+                                     // @ts-ignore
+                                     ol: ({children}) => <ol className="list-decimal pl-6 mb-4 space-y-2">{children}</ol>,
+                                     // @ts-ignore
+                                     li: ({children}) => <li className="text-gray-600">{children}</li>,
+                                     // @ts-ignore
+                                     strong: ({children}) => <strong className="font-bold text-gray-900">{children}</strong>,
+                                     // @ts-ignore
+                                     em: ({children}) => <em className="italic text-gray-700">{children}</em>,
+                                     // @ts-ignore
+                                     blockquote: ({children}) => (
+                                       <blockquote className="border-l-4 border-[#5157E8] pl-4 py-2 mb-4 bg-gray-50 text-gray-600 italic rounded-r">
+                                         {children}
+                                       </blockquote>
+                                     ),
+                                     // @ts-ignore
+                                     code: ({children}) => <code className="bg-gray-100 px-1.5 py-0.5 rounded text-[#5157E8] text-sm">{children}</code>
+                                   }}
+                                 >
+                                   {message.content}
+                                 </ReactMarkdown>
+                               ) : (
+                                 message.content
+                               )}
+                             </div>
+                           </div>
+                         </div>
+                       );
+                     })}
+                     {isChatLoading && (
+                       <div className="flex justify-start">
+                         <div className="flex items-start gap-3 max-w-[80%]">
+                           <div className="w-10 h-10 rounded-full bg-[#10B981] flex-none flex items-center justify-center text-white">
+                             AI
+                           </div>
+                           <div className="py-2 px-4 rounded-2xl bg-gray-100 text-gray-700 rounded-tl-none">
+                             Thinking...
+                           </div>
+                         </div>
+                       </div>
+                     )}
+                   </>
+                 )}
+               </div>
 
-                {/* 输入框和发送按钮 */}
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5157E8] focus:border-transparent"
-                    placeholder="Input your question..."
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  />
-                  <button
-                    className="p-2 text-white bg-[#5157E8] rounded-lg hover:bg-[#3a3fa0] transition-colors"
-                    onClick={handleSendMessage}
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            )}
-            <div className="p-4 flex justify-end border-t border-gray-200">
-            <button
-              onClick={handleNextStep}
-              className="w-full bg-[#5157E8] text-white px-8 py-3 rounded-full shadow-lg text-lg hover:bg-[#3a3fa0] transition-all"
-            >
-              Complete
-            </button>
-            </div>
-          </div>
-        </div>
+               {/* 底部输入区域和Complete按钮紧贴 */}
+               <div className="flex flex-col gap-0 border-t border-gray-200">
+                 {interpretation && (
+                   <div className="p-6 space-y-4">
+                     {/* 提示词模板 */}
+                     <div className="space-y-2">
+                       <div className="text-sm font-medium text-gray-700">Magic If Prompt</div>
+                       <div className="flex flex-wrap gap-2">
+                         {magicIfTemplates.map(template => (
+                           <button
+                             key={template.id}
+                             className="px-3 py-1.5 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+                             onClick={() => usePromptTemplate(template.prompt)}
+                           >
+                             {template.title}
+                           </button>
+                         ))}
+                       </div>
+                     </div>
+
+                     {/* 输入框和发送按钮 */}
+                     <div className="flex gap-2">
+                       <input
+                         type="text"
+                         className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5157E8] focus:border-transparent"
+                         placeholder="Input your question..."
+                         value={chatInput}
+                         onChange={(e) => setChatInput(e.target.value)}
+                         onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                       />
+                       <button
+                         className="p-2 text-white bg-[#5157E8] rounded-lg hover:bg-[#3a3fa0] transition-colors"
+                         onClick={handleSendMessage}
+                       >
+                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                         </svg>
+                       </button>
+                     </div>
+                   </div>
+                 )}
+
+               </div>
+             </div>
+
+             {/* 右侧1/4：角色选择区域 */}
+             <AgentSelector 
+               selectedAgents={selectedAgents}
+               onAgentToggle={handleAgentToggle}
+             />
+           </div>
+         </div>
+      </div>
+
+      {/* 底部按钮 */}
+      <div className="flex-none p-4 flex justify-end">
+        <button 
+          onClick={handleNextStep}
+          className="bg-[#5157E8] text-white px-8 py-3 rounded-full shadow-lg text-lg hover:bg-[#3a3fa0] transition-all"
+        >
+          Complete
+        </button>
       </div>
     </div>
   );
