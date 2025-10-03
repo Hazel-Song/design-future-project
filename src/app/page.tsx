@@ -8,11 +8,12 @@ export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    // 每次进入首页时清空进度和选择
+    // 每次进入首页时清空进度和选择，但保留生成历史记录
     localStorage.removeItem('workshopProgress');
     localStorage.removeItem('selectedFutureSignal');
     localStorage.removeItem('selectedLocalChallenge');
     localStorage.removeItem('interpretationData');
+    // 注意：不删除 generation_history，让用户保留历史记录
   }, []);
 
   // 动态水波扩散背景
@@ -122,8 +123,8 @@ export default function Home() {
       </p>
       <div className="flex flex-col items-center mb-8 z-10">
         <div className="text-center text-base text-gray-700">
-          June–July 2025<br />
-          Organized by: xxxxx
+          October 2025, Singapore<br />
+          Organized by: Design Futures Group @ Tsinghua University
         </div>
       </div>
       <button

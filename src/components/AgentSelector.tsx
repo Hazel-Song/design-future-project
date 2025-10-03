@@ -18,31 +18,31 @@ interface AgentSelectorProps {
 const agents: Agent[] = [
   {
     id: 'government',
-    name: '政府官员',
-    avatar: '官',
+    name: 'Government Official',
+    avatar: 'G',
     color: 'bg-blue-500',
-    description: '代表政府立场，关注政策可行性和公共利益'
+    description: 'Represents government perspective, focuses on policy feasibility and public interest'
   },
   {
     id: 'ngo',
-    name: 'NGO组织',
-    avatar: 'NGO',
+    name: 'NGO Representative',
+    avatar: 'N',
     color: 'bg-green-500',
-    description: '关注社会公益和民生问题'
+    description: 'Focuses on social welfare and community issues'
   },
   {
     id: 'citizen',
-    name: '市民',
-    avatar: '市',
+    name: 'Citizen',
+    avatar: 'C',
     color: 'bg-orange-500',
-    description: '代表普通民众的观点和需求'
+    description: 'Represents everyday people\'s perspectives and needs'
   },
   {
     id: 'student',
-    name: '大学生',
-    avatar: '学',
+    name: 'University Student',
+    avatar: 'S',
     color: 'bg-purple-500',
-    description: '年轻人视角，关注创新和未来发展'
+    description: 'Young person\'s perspective, focuses on innovation and future development'
   }
 ];
 
@@ -94,10 +94,10 @@ export default function AgentSelector({ selectedAgents, onAgentToggle }: AgentSe
       {selectedAgents.length > 0 && (
         <div className="mt-6 p-3 bg-blue-50 rounded-lg">
           <div className="text-xs text-[#5157E8] font-medium mb-2">
-            已选择 {selectedAgents.length} 个角色
+            {selectedAgents.length} role{selectedAgents.length > 1 ? 's' : ''} selected
           </div>
           <div className="text-xs text-gray-600">
-            选中的角色将参与讨论，基于各自立场发表观点
+            Selected roles will participate in the discussion, expressing views based on their respective positions
           </div>
         </div>
       )}

@@ -27,32 +27,61 @@ interface FormError {
 }
 
 const initialChallenges: Challenge[] = [
-  { id: 1, title: 'Population decline', description: '人口减少带来的社会和经济挑战' },
-  { id: 2, title: 'Female exodus', description: '女性人才流失问题及其影响' },
-  { id: 3, title: 'Social mutual assistance and social innovation', description: '社会互助和创新模式的发展' },
-  { id: 4, title: 'Cultural and Future Spaces', description: '文化空间与未来空间的融合发展' },
-  { id: 5, title: 'New Environments, how to attract research institutions', description: '如何创造环境吸引研究机构' },
-  { id: 6, title: 'Smart City & Smart Citizens', description: '智慧城市与智慧公民的协同发展' },
-  { id: 7, title: 'Future Industries and Services', description: '未来产业与服务模式的演变' },
-  { id: 8, title: 'New infrastructure for R&D', description: '研发基础设施的创新与升级' },
-  { id: 9, title: 'Future Creativity, how can AI solve real-world problems', description: 'AI如何解决现实世界问题的创新思路' },
+  { id: 1, title: 'Population ageing and declining fertility', description: 'Social challenges from aging population and declining birth rates' },
+  { id: 2, title: 'Youth brain drain and global talent competition', description: 'Pressure from youth talent outflow and global talent competition' },
+  { id: 3, title: 'Rising cost of living and housing affordability', description: 'Issues with increasing living costs and housing affordability' },
+  { id: 4, title: 'Social inequality and income polarization', description: 'Trends of social inequality and income polarization' },
+  { id: 5, title: 'Gender imbalance in leadership and innovation sectors', description: 'Gender imbalance in leadership and innovation sectors' },
+  { id: 6, title: 'Immigration pressures and social integration', description: 'Immigration pressures and social integration challenges' },
+  { id: 7, title: 'Cultural identity preservation in a globalized city', description: 'Cultural identity preservation in a globalized city' },
+  { id: 8, title: 'Shrinking civic participation and community bonding', description: 'Declining civic participation and weakening community bonds' },
+  { id: 9, title: 'Environmental sustainability and climate resilience', description: 'Environmental sustainability and climate resilience building' },
+  { id: 10, title: 'Sea-level rise and urban flood management', description: 'Sea-level rise and urban flood management challenges' },
+  { id: 11, title: 'Heat island effect and livability in dense environments', description: 'Heat island effect and livability issues in dense environments' },
+  { id: 12, title: 'Smart Nation fatigue and digital inclusion challenges', description: 'Smart Nation fatigue and digital inclusion challenges' },
+  { id: 13, title: 'Cybersecurity threats and trust in digital governance', description: 'Cybersecurity threats and trust in digital governance' },
+  { id: 14, title: 'Future-ready education and lifelong learning systems', description: 'Building future-ready education and lifelong learning systems' },
+  { id: 15, title: 'Health resilience in ageing society', description: 'Health resilience and pandemic preparedness in aging society' },
+  { id: 16, title: 'Urban logistics and last-mile delivery in dense areas', description: 'Urban logistics and last-mile delivery in dense areas' },
+  { id: 17, title: 'Transport sustainability and autonomous mobility transition', description: 'Transport sustainability and autonomous mobility transition' },
+  { id: 18, title: 'Energy transition toward green economy and net-zero targets', description: 'Energy transition toward green economy and net-zero targets' },
+  { id: 19, title: 'AI governance, ethics, and impact on employment', description: 'AI governance, ethics, and impact on employment' },
+  { id: 20, title: 'Population decline', description: 'Social and economic challenges from population decline' },
+  { id: 21, title: 'Female exodus', description: 'Issues and impacts of female talent outflow' },
+  { id: 22, title: 'Social mutual assistance and social innovation', description: 'Development of social mutual assistance and innovation models' },
+  { id: 23, title: 'Cultural and Future Spaces', description: 'Integrated development of cultural and future spaces' },
+  { id: 24, title: 'New Environments, how to attract research institutions', description: 'How to create environments that attract research institutions' },
+  { id: 25, title: 'Smart City & Smart Citizens', description: 'Collaborative development of smart cities and smart citizens' },
+  { id: 26, title: 'Future Industries and Services', description: 'Evolution of future industries and service models' },
+  { id: 27, title: 'New infrastructure for R&D', description: 'Innovation and upgrading of R&D infrastructure' },
+  { id: 28, title: 'Future Creativity, how can AI solve real-world problems', description: 'Innovative approaches to how AI can solve real-world problems' },
 ];
 
 const promptTemplates = [
   {
     id: 1,
-    title: "Population Challenges in Aizu Region",
-    prompt: "As an expert familiar with the Aizu region, please analyze the main population challenges faced by Aizu, including aging population and talent outflow."
+    title: "Population Challenges in Singapore",
+    prompt: "As an expert familiar with Singapore, please analyze the main population challenges faced by Singapore, including aging population, declining birth rates, and talent competition."
   },
   {
     id: 2,
-    title: "Industrial Development in Aizu Region",
-    prompt: "Please analyze the current situation of traditional industries in Aizu and the challenges and opportunities they may face in digital transformation."
+    title: "Smart Nation Development in Singapore",
+    prompt: "Please analyze Singapore's Smart Nation initiative and the challenges and opportunities in digital transformation and innovation."
   },
   {
     id: 3,
-    title: "Cultural Preservation in Aizu Region",
-    prompt: "Please discuss the challenges Aizu faces in promoting cultural innovation and modernization while preserving traditional culture."
+    title: "Cultural Harmony and Integration in Singapore",
+    prompt: "Please discuss the challenges Singapore faces in maintaining cultural diversity while promoting social cohesion and national identity."
+  },
+  {
+    id: 4,
+    title: "Sustainability and Climate Resilience in Singapore",
+    prompt: "Please analyze Singapore's approach to environmental sustainability and climate resilience, including challenges and opportunities."
+  },
+  {
+    id: 5,
+    title: "Economic Competitiveness and Future Workforce",
+    prompt: "Please discuss Singapore's economic competitiveness challenges and the transition to a future-ready workforce."
   }
 ];
 
@@ -91,11 +120,34 @@ export default function LocalChallengesPage() {
       }
     }
 
+    // 恢复对话历史（仅限当前会话）
+    const sessionChatHistory = sessionStorage.getItem('localChallengesChatHistory');
+    if (sessionChatHistory) {
+      try {
+        setChatHistory(JSON.parse(sessionChatHistory));
+      } catch (error) {
+        console.error('Failed to restore chat history:', error);
+      }
+    }
+
+    // 恢复选中的agents（仅限当前会话）
+    const sessionSelectedAgents = sessionStorage.getItem('localChallengesSelectedAgents');
+    if (sessionSelectedAgents) {
+      try {
+        setSelectedAgents(JSON.parse(sessionSelectedAgents));
+      } catch (error) {
+        console.error('Failed to restore selected agents:', error);
+      }
+    }
+
     // 添加页面卸载事件监听器
     const handleUnload = () => {
       localStorage.removeItem('selectedFutureSignal');
       localStorage.removeItem('selectedLocalChallenge');
       localStorage.removeItem('interpretationData');
+      // 清除sessionStorage中的对话历史
+      sessionStorage.removeItem('localChallengesChatHistory');
+      sessionStorage.removeItem('localChallengesSelectedAgents');
     };
 
     window.addEventListener('beforeunload', handleUnload);
@@ -104,6 +156,19 @@ export default function LocalChallengesPage() {
       window.removeEventListener('beforeunload', handleUnload);
     };
   }, []);
+
+  // 监听对话历史和选中agents的变化，自动保存到sessionStorage
+  useEffect(() => {
+    if (chatHistory.length > 0) {
+      sessionStorage.setItem('localChallengesChatHistory', JSON.stringify(chatHistory));
+    }
+  }, [chatHistory]);
+
+  useEffect(() => {
+    if (selectedAgents.length > 0) {
+      sessionStorage.setItem('localChallengesSelectedAgents', JSON.stringify(selectedAgents));
+    }
+  }, [selectedAgents]);
 
   const handleAddChallenge = () => {
     const errors: FormError = {};
@@ -147,13 +212,21 @@ export default function LocalChallengesPage() {
 
     if (selectedAgents.length === 0) {
       const errorResponse = { role: 'assistant' as const, content: 'Please select at least one discussion participant.' };
-      setChatHistory(prev => [...prev, errorResponse]);
+      setChatHistory(prev => {
+        const newHistory = [...prev, errorResponse];
+        sessionStorage.setItem('localChallengesChatHistory', JSON.stringify(newHistory));
+        return newHistory;
+      });
       return;
     }
     
     const newMessage = { role: 'user' as const, content: chatInput };
-    setChatHistory([...chatHistory, newMessage]);
+    const updatedHistory = [...chatHistory, newMessage];
+    setChatHistory(updatedHistory);
     setChatInput('');
+    
+    // 立即保存更新后的对话历史到sessionStorage
+    sessionStorage.setItem('localChallengesChatHistory', JSON.stringify(updatedHistory));
     setIsLoading(true);
     
     try {
@@ -209,12 +282,17 @@ export default function LocalChallengesPage() {
                   name: data.name,
                   agentId: data.agentId
                 };
-                setChatHistory(prev => [...prev, currentAgentMessage!]);
+                setChatHistory(prev => {
+                  const newHistory = [...prev, currentAgentMessage!];
+                  sessionStorage.setItem('localChallengesChatHistory', JSON.stringify(newHistory));
+                  return newHistory;
+                });
               } else if (data.type === 'content' && currentAgentMessage) {
                 currentAgentMessage.content += data.content;
                 setChatHistory(prev => {
                   const newHistory = [...prev];
                   newHistory[newHistory.length - 1] = { ...currentAgentMessage! };
+                  sessionStorage.setItem('localChallengesChatHistory', JSON.stringify(newHistory));
                   return newHistory;
                 });
               } else if (data.type === 'agent_end') {
@@ -231,7 +309,12 @@ export default function LocalChallengesPage() {
       }
     } catch (error) {
       console.error('Error in chat:', error);
-      alert('An error occurred while chatting. Please try again.');
+      const errorResponse = { role: 'assistant' as const, content: 'Sorry, an error occurred while processing your request. Please try again.' };
+      setChatHistory(prev => {
+        const newHistory = [...prev, errorResponse];
+        sessionStorage.setItem('localChallengesChatHistory', JSON.stringify(newHistory));
+        return newHistory;
+      });
     } finally {
       setIsLoading(false);
     }
@@ -270,9 +353,9 @@ export default function LocalChallengesPage() {
       if (prev.includes(id)) {
         return prev.filter(i => i !== id);
       } else {
-        // 限制最多选择3个
+        // Limit maximum 3 selections
         if (prev.length >= 3) {
-          alert('最多只能选择3个挑战');
+          alert('Maximum 3 challenges can be selected');
           return prev;
         }
         return [...prev, id];
@@ -520,7 +603,7 @@ export default function LocalChallengesPage() {
                         setShowPromptTemplates(false);
                       }
                     }}
-                    placeholder="输入您的问题..."
+                    placeholder="Enter your question..."
                     className="flex-1 px-4 py-3 rounded-full border focus:outline-none focus:ring-2 focus:ring-[#5157E8] bg-white"
                   />
                   <button

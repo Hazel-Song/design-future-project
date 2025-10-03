@@ -57,10 +57,37 @@ export default function TomorrowHeadlinesPage() {
       localStorage.removeItem('interpretationData');
     };
 
+    // 监听从历史记录重新生成的事件
+    const handleRegenerateFromHistory = (event: CustomEvent) => {
+      const record = event.detail;
+      
+      // 设置参数
+      setSelectedYear(record.year);
+      setSelectedStyle(record.style);
+      
+      // 设置生成的数据
+      setSavedData({
+        futureSignal: { title: record.selectedSignal },
+        localChallenge: { title: record.selectedChallenge },
+        interpretation: { content: record.interpretation }
+      });
+      
+      // 设置生成的图像
+      setGeneratedImage(record.generatedImage);
+      
+      // 滚动到生成按钮
+      const generateButton = document.querySelector('[data-testid="generate-button"]');
+      if (generateButton) {
+        generateButton.scrollIntoView({ behavior: 'smooth' });
+      }
+    };
+
     window.addEventListener('beforeunload', handleUnload);
+    window.addEventListener('regenerateFromHistory', handleRegenerateFromHistory as EventListener);
 
     return () => {
       window.removeEventListener('beforeunload', handleUnload);
+      window.removeEventListener('regenerateFromHistory', handleRegenerateFromHistory as EventListener);
     };
   }, []);
 
@@ -80,6 +107,28 @@ export default function TomorrowHeadlinesPage() {
 
       if (response.data && response.data.imageUrl) {
         setGeneratedImage(response.data.imageUrl);
+        
+        // 保存生成历史记录
+        const generationRecord = {
+          id: Date.now().toString(),
+          timestamp: Date.now(),
+          selectedSignal: savedData.futureSignal?.title || 'Unknown Signal',
+          selectedChallenge: savedData.localChallenge?.title || 'Unknown Challenge',
+          interpretation: savedData.interpretation.content,
+          generatedImage: response.data.imageUrl,
+          generationMethod: response.data.method || 'Unknown',
+          style: selectedStyle,
+          year: selectedYear
+        };
+
+        // 触发历史记录保存事件
+        console.log("Tomorrow Headlines: Dispatching newGeneration event with record:", generationRecord);
+        const newGenerationEvent = new CustomEvent('newGeneration', {
+          detail: generationRecord
+        });
+        window.dispatchEvent(newGenerationEvent);
+        console.log("Tomorrow Headlines: Event dispatched");
+        
       } else {
         throw new Error('Invalid response data');
       }
@@ -199,6 +248,7 @@ export default function TomorrowHeadlinesPage() {
                     </select>
                   </div>
                   <button
+                    data-testid="generate-button"
                     className="w-full bg-[#5157E8] text-white py-2 rounded-lg hover:bg-[#3a3fa0] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={handleGenerateHeadline}
                     disabled={isGenerating}

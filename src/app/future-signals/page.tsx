@@ -195,11 +195,11 @@ export default function FutureSignalsPage() {
             )}
             {viewType === 'table' && (
               <div className="overflow-auto rounded-lg border border-gray-200">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm table-fixed">
                   <thead className="sticky top-0 bg-[#F3F4FD]">
                     <tr className="text-[#5157E8]">
-                      <th className="p-3 text-left font-medium">Signal</th>
-                      <th className="p-3 text-left font-medium">Title</th>
+                      <th className="w-24 p-3 text-left font-medium">Signal</th>
+                      <th className="w-60 p-3 text-left font-medium">Title</th>
                       <th className="p-3 text-left font-medium">Summary</th>
                     </tr>
                   </thead>
@@ -212,12 +212,12 @@ export default function FutureSignalsPage() {
                         }`}
                         onClick={() => setSelectedId(item.id)}
                       >
-                        <td className="p-3 border-b border-gray-100">
-                          <span className="inline-block px-2 py-1 bg-[#5157E8] text-white text-xs rounded">
+                        <td className="w-24 p-3 border-b border-gray-100">
+                          <span className="inline-block px-2 py-1 bg-[#5157E8] text-white text-xs rounded whitespace-nowrap">
                             {item.sign}
                           </span>
                         </td>
-                        <td className="p-3 border-b border-gray-100 text-[#5157E8] font-medium">{item.title}</td>
+                        <td className="w-80 p-3 border-b border-gray-100 text-[#5157E8] font-medium">{item.title}</td>
                         <td className="p-3 border-b border-gray-100 text-gray-600">{item.summary}</td>
                       </tr>
                     ))}

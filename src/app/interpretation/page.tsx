@@ -88,6 +88,13 @@ export default function InterpretationPage() {
       const savedFutureSignal = localStorage.getItem('selectedFutureSignal');
       const savedLocalChallenge = localStorage.getItem('selectedLocalChallenge');
 
+      // 恢复会话级缓存数据
+      const sessionInterpretation = sessionStorage.getItem('interpretationData');
+      const sessionPrototyping = sessionStorage.getItem('interpretationPrototyping');
+      const sessionChatHistory = sessionStorage.getItem('interpretationChatHistory');
+      const sessionSelectedAgents = sessionStorage.getItem('interpretationSelectedAgents');
+      const sessionChatInput = sessionStorage.getItem('interpretationChatInput');
+
       console.log('Saved Future Signal:', savedFutureSignal);
       console.log('Saved Local Challenge:', savedLocalChallenge);
 
@@ -139,15 +146,113 @@ export default function InterpretationPage() {
           console.error('Error parsing Local Challenge:', e);
         }
       }
+
+      // 恢复会话级缓存数据
+      if (sessionInterpretation) {
+        try {
+          const parsedInterpretation = JSON.parse(sessionInterpretation);
+          setInterpretation(parsedInterpretation.content || '');
+        } catch (e) {
+          console.error('Error parsing interpretation data:', e);
+        }
+      }
+
+      if (sessionPrototyping) {
+        try {
+          const parsedPrototyping = JSON.parse(sessionPrototyping);
+          setPrototypingCard(parsedPrototyping.content || '');
+          setPrototypeA(parsedPrototyping.a || '');
+          setPrototypeB(parsedPrototyping.b || '');
+          setPrototypeC(parsedPrototyping.c || '');
+        } catch (e) {
+          console.error('Error parsing prototyping data:', e);
+        }
+      }
+
+      if (sessionChatHistory) {
+        try {
+          setChatHistory(JSON.parse(sessionChatHistory));
+        } catch (e) {
+          console.error('Error parsing chat history:', e);
+        }
+      }
+
+      if (sessionSelectedAgents) {
+        try {
+          setSelectedAgents(JSON.parse(sessionSelectedAgents));
+        } catch (e) {
+          console.error('Error parsing selected agents:', e);
+        }
+      }
+
+      if (sessionChatInput) {
+        setChatInput(sessionChatInput);
+      }
+
     } catch (error) {
       console.error('Error loading data from localStorage:', error);
     }
+
+    // 添加页面卸载事件监听器，清除会话缓存
+    const handleUnload = () => {
+      localStorage.removeItem('selectedFutureSignal');
+      localStorage.removeItem('selectedLocalChallenge');
+      localStorage.removeItem('interpretationData');
+      // 清除interpretation页面的sessionStorage
+      sessionStorage.removeItem('interpretationData');
+      sessionStorage.removeItem('interpretationPrototyping');
+      sessionStorage.removeItem('interpretationChatHistory');
+      sessionStorage.removeItem('interpretationSelectedAgents');
+      sessionStorage.removeItem('interpretationChatInput');
+    };
+
+    window.addEventListener('beforeunload', handleUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleUnload);
+    };
   }, []);
 
   // 添加数据加载状态的监听
   useEffect(() => {
     console.log('Current Selected Data:', selectedData);
   }, [selectedData]);
+
+  // 监听状态变化，自动保存到sessionStorage
+  useEffect(() => {
+    if (interpretation) {
+      sessionStorage.setItem('interpretationData', JSON.stringify({ content: interpretation }));
+    }
+  }, [interpretation]);
+
+  useEffect(() => {
+    if (prototypingCard || prototypeA || prototypeB || prototypeC) {
+      sessionStorage.setItem('interpretationPrototyping', JSON.stringify({
+        content: prototypingCard,
+        a: prototypeA,
+        b: prototypeB,
+        c: prototypeC
+      }));
+    }
+  }, [prototypingCard, prototypeA, prototypeB, prototypeC]);
+
+  useEffect(() => {
+    if (chatHistory.length > 0) {
+      sessionStorage.setItem('interpretationChatHistory', JSON.stringify(chatHistory));
+    }
+  }, [chatHistory]);
+
+  useEffect(() => {
+    if (selectedAgents.length > 0) {
+      sessionStorage.setItem('interpretationSelectedAgents', JSON.stringify(selectedAgents));
+    }
+  }, [selectedAgents]);
+
+  useEffect(() => {
+    if (chatInput) {
+      sessionStorage.setItem('interpretationChatInput', chatInput);
+    }
+  }, [chatInput]);
 
   const generatePrototypingCard = () => {
     if (!selectedData.futureSignal || !selectedData.localChallenge) {
@@ -273,8 +378,12 @@ export default function InterpretationPage() {
     }
     
     const newMessage = { role: 'user' as const, content: chatInput };
-    setChatHistory([...chatHistory, newMessage]);
+    const updatedHistory = [...chatHistory, newMessage];
+    setChatHistory(updatedHistory);
     setChatInput('');
+    
+    // 立即保存更新后的对话历史到sessionStorage
+    sessionStorage.setItem('interpretationChatHistory', JSON.stringify(updatedHistory));
     setIsChatLoading(true);
     
     try {
@@ -328,12 +437,17 @@ export default function InterpretationPage() {
                   name: data.name,
                   agentId: data.agentId
                 };
-                setChatHistory(prev => [...prev, currentAgentMessage!]);
+                setChatHistory(prev => {
+                  const newHistory = [...prev, currentAgentMessage!];
+                  sessionStorage.setItem('interpretationChatHistory', JSON.stringify(newHistory));
+                  return newHistory;
+                });
               } else if (data.type === 'content' && currentAgentMessage) {
                 currentAgentMessage.content += data.content;
                 setChatHistory(prev => {
                   const newHistory = [...prev];
                   newHistory[newHistory.length - 1] = { ...currentAgentMessage! };
+                  sessionStorage.setItem('interpretationChatHistory', JSON.stringify(newHistory));
                   return newHistory;
                 });
               } else if (data.type === 'agent_end') {
@@ -351,6 +465,14 @@ export default function InterpretationPage() {
     } catch (error) {
       console.error('An error occurred while sending the message. Please try again.');
       alert('An error occurred while sending the message. Please try again.');
+      
+      // 添加错误消息到对话历史并保存到sessionStorage
+      const errorResponse = { role: 'assistant' as const, content: 'Sorry, an error occurred while processing your request. Please try again.' };
+      setChatHistory(prev => {
+        const newHistory = [...prev, errorResponse];
+        sessionStorage.setItem('interpretationChatHistory', JSON.stringify(newHistory));
+        return newHistory;
+      });
     } finally {
       setIsChatLoading(false);
     }

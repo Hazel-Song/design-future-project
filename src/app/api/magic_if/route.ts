@@ -3,7 +3,9 @@ import OpenAI from 'openai';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-  baseURL: 'https://api.gptplus5.com/v1'
+  baseURL: 'https://yinli.one/v1',
+  timeout: 60000,
+  maxRetries: 3
 });
 
 export async function POST(req: Request) {

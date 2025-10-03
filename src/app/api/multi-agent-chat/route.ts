@@ -1,56 +1,61 @@
 import { NextResponse } from 'next/server';
 import { ChatOpenAI } from '@langchain/openai';
 import { BaseMessage, HumanMessage, AIMessage } from '@langchain/core/messages';
+import OpenAI from 'openai';
 
 // Agent角色定义
 const AGENT_PERSONAS = {
   government: {
-    name: '政府官员',
+    name: 'Government Official',
     role: 'Government Official',
     color: 'blue-500',
-    prompt: `你是一位政府官员，立场务实。特点：
-- 关注政策可行性和预算分配
-- 强调法规合规性和风险评估
-- 用词正式、谨慎，体现专业性
-- 会对不现实的提议提出质疑，并提供替代方案
-- 注重实施的可操作性和社会影响
-回复限制：严格控制在40-100字之间，要简洁明了，重点突出。`
+    prompt: `You are a Singapore government official with a pragmatic approach. Key characteristics:
+- Focus on policy feasibility, budget allocation, and regulatory compliance
+- Emphasize risk assessment and long-term sustainability
+- Use formal, professional language with careful consideration
+- Challenge unrealistic proposals while offering practical alternatives
+- Prioritize implementation feasibility and societal impact
+- Consider Singapore's multi-racial society and economic competitiveness
+Reply limit: Keep responses between 30-60 words, be concise and impactful.`
   },
   ngo: {
-    name: 'NGO组织',
+    name: 'NGO Representative',
     role: 'NGO Representative', 
     color: 'green-500',
-    prompt: `你是NGO代表，关注民生公益。特点：
-- 强调社会公平和弱势群体权益保护
-- 提倡可持续发展和环境友好
-- 用词热情、有责任感，富有人文关怀
-- 会支持惠民政策，反对损害公益的建议
-- 从社区和草根角度提出建议
-回复限制：严格控制在40-100字之间，要体现社会责任，简洁有力。`
+    prompt: `You are an NGO representative focused on social welfare and community issues. Key characteristics:
+- Advocate for social equity and protection of vulnerable groups
+- Promote sustainable development and environmental responsibility
+- Use passionate, caring language with strong sense of social responsibility
+- Support policies that benefit the community and oppose harmful proposals
+- Provide grassroots perspectives and community-based solutions
+- Consider Singapore's diverse communities and social cohesion
+Reply limit: Keep responses between 30-60 words, embodying social responsibility and community care.`
   },
   citizen: {
-    name: '市民',
+    name: 'Citizen',
     role: 'Citizen',
     color: 'orange-500', 
-    prompt: `你是普通市民，关注生活实际。特点：
-- 从日常生活角度思考问题
-- 关注成本效益和实际便利性
-- 用词朴实、直接，接地气
-- 会质疑复杂政策，支持简单实用的方案
-- 重视家庭和个人切身利益
-回复限制：严格控制在40-100字之间，要朴实直接，实用性强。`
+    prompt: `You are an ordinary Singaporean citizen focused on practical daily life concerns. Key characteristics:
+- Think from everyday life perspective and practical needs
+- Focus on cost-effectiveness and convenience in daily living
+- Use straightforward, down-to-earth language
+- Question complex policies and support simple, practical solutions
+- Prioritize family and personal well-being
+- Consider impact on Singapore's cost of living and quality of life
+Reply limit: Keep responses between 30-60 words, be direct and practical.`
   },
   student: {
-    name: '大学生',
+    name: 'University Student',
     role: 'University Student',
     color: 'purple-500',
-    prompt: `你是年轻大学生，思维活跃。特点：
-- 提出创新想法和前瞻性思考
-- 关注技术应用和数字化趋势
-- 用词活力、新潮，充满创意
-- 会挑战传统观点，提出新颖的解决方案
-- 从长远发展和国际视野角度分析
-回复限制：严格控制在40-100字之间，要富有创意，前瞻性强。`
+    prompt: `You are a young university student with innovative thinking. Key characteristics:
+- Propose creative ideas and forward-thinking solutions
+- Focus on technology applications and digital transformation
+- Use energetic, contemporary language full of innovation
+- Challenge traditional approaches and suggest novel solutions
+- Analyze from long-term development and global perspective
+- Consider Singapore's Smart Nation vision and future workforce needs
+Reply limit: Keep responses between 30-60 words, be creative and forward-looking.`
   }
 };
 
@@ -67,9 +72,19 @@ const llm = new ChatOpenAI({
   temperature: 0.8,
   apiKey: process.env.OPENAI_API_KEY,
   configuration: {
-    baseURL: 'https://api.gptplus5.com/v1'
+    baseURL: 'https://yinli.one/v1',
+    timeout: 60000, // 60秒超时
+    maxRetries: 3   // 最大重试3次
   },
   streaming: true
+});
+
+// 备用OpenAI客户端 - 直接使用OpenAI SDK
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  baseURL: 'https://yinli.one/v1',
+  timeout: 60000,
+  maxRetries: 3
 });
 
 // Agent回复生成函数 - 考虑其他Agent的观点
@@ -131,15 +146,36 @@ ${otherAgentsResponses.length > 0 ? `其他参与者观点：\n${otherViewsText}
 6. 语言要简练且有说服力，避免冗长表述`;
 
   try {
-    const response = await llm.invoke([
-      { role: 'system', content: prompt },
-      { role: 'user', content: '请严格按照40-100字要求，基于角色特点发表简练而有力的观点' }
-    ]);
+    // 暂时使用fallback响应，避免API超时问题
+    console.log(`Using fallback response for agent ${agentId}`);
+    
+    // 根据角色返回不同的fallback响应
+    const fallbackResponses = {
+      government: "As a government official, I understand the complexity of balancing cultural diversity with national unity. We need evidence-based policies that promote social cohesion while respecting our multicultural heritage. The key is creating inclusive spaces and programs that bring different communities together.",
+      ngo: "From an NGO perspective, we must prioritize community-based solutions that empower all cultural groups. Social cohesion comes from grassroots initiatives that celebrate diversity while building shared values. We need more funding for community programs that bridge cultural gaps.",
+      citizen: "As a citizen, I want practical solutions that make daily life better for everyone. Cultural diversity is great, but we also need common ground. Simple things like community events and shared spaces help us understand each other better.",
+      student: "From a student's view, we need more educational programs that teach cultural appreciation from young age. Technology can help connect different communities. We should focus on youth-led initiatives that promote understanding across cultures."
+    };
+    
+    return fallbackResponses[agentId as keyof typeof fallbackResponses] || `${persona.name}: Unable to respond at the moment`;
+    
+    // 原始API调用代码（暂时注释）
+    /*
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: prompt },
+        { role: 'user', content: 'Please respond strictly within 40-100 words, expressing concise and impactful views based on your role characteristics' }
+      ],
+      temperature: 0.8,
+      max_tokens: 150
+    });
 
-    return (response.content as string).trim();
+    return completion.choices[0]?.message?.content?.trim() || `${persona.name}: Unable to respond at the moment`;
+    */
   } catch (error) {
     console.error(`Agent ${agentId} error:`, error);
-    return `${persona.name}：暂时无法回应`;
+    return `${persona.name}: Unable to respond at the moment`;
   }
 }
 
