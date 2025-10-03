@@ -69,7 +69,14 @@ export default function TomorrowHeadlinesPage() {
       setSavedData({
         futureSignal: { title: record.selectedSignal },
         localChallenge: { title: record.selectedChallenge },
-        interpretation: { content: record.interpretation }
+        interpretation: { 
+          content: record.interpretation,
+          prototype: {
+            a: '',
+            b: '',
+            c: ''
+          }
+        }
       });
       
       // 设置生成的图像
