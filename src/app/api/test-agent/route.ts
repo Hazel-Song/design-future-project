@@ -9,8 +9,13 @@ const openai = new OpenAI({
 });
 
 export async function POST(req: Request) {
+  let agentId = 'unknown';
+  let message = 'unknown';
+  
   try {
-    const { agentId, message } = await req.json();
+    const body = await req.json();
+    agentId = body.agentId || 'unknown';
+    message = body.message || 'unknown';
 
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json({
