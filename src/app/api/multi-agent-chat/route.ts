@@ -146,21 +146,15 @@ ${otherAgentsResponses.length > 0 ? `其他参与者观点：\n${otherViewsText}
 6. 语言要简练且有说服力，避免冗长表述`;
 
   try {
-    // 暂时使用fallback响应，避免API超时问题
-    console.log(`Using fallback response for agent ${agentId}`);
+    // 检查环境变量
+    if (!process.env.OPENAI_API_KEY) {
+      console.error('OPENAI_API_KEY is not set');
+      return `${persona.name}: API key not configured`;
+    }
+
+    console.log(`Calling OpenAI API for agent ${agentId}`);
     
-    // 根据角色返回不同的fallback响应
-    const fallbackResponses = {
-      government: "As a government official, I understand the complexity of balancing cultural diversity with national unity. We need evidence-based policies that promote social cohesion while respecting our multicultural heritage. The key is creating inclusive spaces and programs that bring different communities together.",
-      ngo: "From an NGO perspective, we must prioritize community-based solutions that empower all cultural groups. Social cohesion comes from grassroots initiatives that celebrate diversity while building shared values. We need more funding for community programs that bridge cultural gaps.",
-      citizen: "As a citizen, I want practical solutions that make daily life better for everyone. Cultural diversity is great, but we also need common ground. Simple things like community events and shared spaces help us understand each other better.",
-      student: "From a student's view, we need more educational programs that teach cultural appreciation from young age. Technology can help connect different communities. We should focus on youth-led initiatives that promote understanding across cultures."
-    };
-    
-    return fallbackResponses[agentId as keyof typeof fallbackResponses] || `${persona.name}: Unable to respond at the moment`;
-    
-    // 原始API调用代码（暂时注释）
-    /*
+    // 使用OpenAI API生成回复
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
@@ -172,7 +166,6 @@ ${otherAgentsResponses.length > 0 ? `其他参与者观点：\n${otherViewsText}
     });
 
     return completion.choices[0]?.message?.content?.trim() || `${persona.name}: Unable to respond at the moment`;
-    */
   } catch (error) {
     console.error(`Agent ${agentId} error:`, error);
     return `${persona.name}: Unable to respond at the moment`;
