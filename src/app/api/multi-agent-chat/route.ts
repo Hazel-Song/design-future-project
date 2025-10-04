@@ -130,20 +130,12 @@ async function generateAgentResponse(
 
   const prompt = `${systemPrompt}
 
-对话历史：
-${historyText}
+用户问题：${userMessage}
 
-用户说：${userMessage}
+${historyText ? `对话历史：\n${historyText}\n` : ''}
+${otherAgentsResponses.length > 0 ? `其他观点：\n${otherViewsText}\n` : ''}
 
-${otherAgentsResponses.length > 0 ? `其他参与者观点：\n${otherViewsText}\n` : ''}
-
-请基于你的角色身份回应。要求：
-1. 严格控制在40-100字之间，超过100字将被截断，请务必遵守
-2. 可以认可或反驳其他观点，但要简洁有力
-3. 体现角色特色和专业背景
-4. 提供1-2个具体的建议或方案
-5. 直接回复，不要角色名称前缀
-6. 语言要简练且有说服力，避免冗长表述`;
+请基于你的角色身份简洁回应（40-100字），直接回复内容，不要角色名称前缀。`;
 
   try {
     // 检查环境变量
@@ -153,22 +145,35 @@ ${otherAgentsResponses.length > 0 ? `其他参与者观点：\n${otherViewsText}
     }
 
     console.log(`Calling OpenAI API for agent ${agentId}`);
+    console.log(`Prompt length: ${prompt.length}`);
     
     // 使用OpenAI API生成回复
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
         { role: 'system', content: prompt },
-        { role: 'user', content: 'Please respond strictly within 40-100 words, expressing concise and impactful views based on your role characteristics' }
+        { role: 'user', content: '请简洁回应，40-100字' }
       ],
       temperature: 0.8,
       max_tokens: 150
     });
 
-    return completion.choices[0]?.message?.content?.trim() || `${persona.name}: Unable to respond at the moment`;
+    const response = completion.choices[0]?.message?.content?.trim();
+    console.log(`API response for ${agentId}:`, response);
+    
+    if (!response) {
+      console.error(`Empty response from OpenAI for agent ${agentId}`);
+      return `${persona.name}: Empty response from API`;
+    }
+
+    return response;
   } catch (error) {
     console.error(`Agent ${agentId} error:`, error);
-    return `${persona.name}: Unable to respond at the moment`;
+    console.error(`Error details:`, {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    return `${persona.name}: API error - ${error instanceof Error ? error.message : 'Unknown error'}`;
   }
 }
 
